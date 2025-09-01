@@ -327,8 +327,8 @@ export default function App() {
                 </div>
                 <LanguageToggle />
             </div>
-      </motion.header>
     </div>
+      </motion.header>
 
         <main>
           <AnimatePresence mode="wait">
