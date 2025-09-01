@@ -8,17 +8,20 @@ import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, Download, HelpCirc
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useLanguage } from "./hooks/useLanguage";
 import type { Activity, CompletedSlot, ViewType } from "./types";
-import { defaultActivities } from "./constants";
+import { defaultActivities } from './constants';
+import { defaultActivitiesEN } from './constantsEN';
 import { verses } from "./data/verses";
+import { versesEN } from "./data/versesEN";
 import { Clock24h } from "./components/Clock24h";
 import { ActivityList } from "./components/ActivityList";
-import { SettingsView } from "./components/SettingsView";
+import SettingsView from "./components/SettingsView";
 import { StatsView } from "./components/StatsView";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { DailyVerse } from "./components/DailyVerse";
 import { PictureInPictureClock } from "./components/PictureInPictureClock";
 import { OnboardingGuide, type TourStep } from "./components/OnboardingGuide";
+import { LanguageSelector } from "./components/LanguageSelector";
 import { UpdateToast } from "./components/UpdateToast";
 import { OfflineToast } from "./components/OfflineToast";
 import { FAQView } from "./components/FAQView";
@@ -92,13 +95,14 @@ export default function App() {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
-  const [activities, setActivities] = useLocalStorage<Activity[]>('activities', defaultActivities);
+  const [activities, setActivities] = useLocalStorage<Activity[]>('activities', language === 'fr' ? defaultActivities : defaultActivitiesEN);
   const [completedSlots, setCompletedSlots] = useLocalStorage<CompletedSlot[]>('completedSlots', []);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showVerse, setShowVerse] = useLocalStorage<boolean>('showVerse', true);
   const [isPipEnabled, setPipEnabled] = useState(false);
   const [isPipSupported, setIsPipSupported] = useState(false);
   const [hasSeenTour, setHasSeenTour] = useLocalStorage('hasSeenTour', false);
+  const [hasSelectedLanguage, setHasSelectedLanguage] = useLocalStorage('hasSelectedLanguage', false);
   const [showUpdateToast, setShowUpdateToast] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
@@ -244,11 +248,16 @@ export default function App() {
 
   const verseOfTheDay = useMemo(() => {
     const dayOfYear = getDayOfYear(new Date());
-    return verses[dayOfYear % verses.length];
-  }, []);
+    return language === 'fr' 
+      ? verses[dayOfYear % verses.length]
+      : versesEN[dayOfYear % versesEN.length];
+  }, [language]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
+      {!hasSelectedLanguage && (
+        <LanguageSelector onComplete={() => setHasSelectedLanguage(true)} />
+      )}
       <div className="container mx-auto p-4 max-w-7xl">
         <motion.header
           className="flex flex-col sm:flex-row items-center justify-between mb-8 p-4 rounded-2xl bg-card border shadow-sm"
@@ -367,11 +376,11 @@ export default function App() {
                   }}
                 >
                   <div className="p-4 rounded-xl border bg-card text-center">
-                    <p className="text-sm text-muted-foreground">Temps prévu</p>
+                    <p className="text-sm text-muted-foreground">{language === 'fr' ? 'Temps prévu' : 'Planned time'}</p>
                     <p className="text-2xl font-bold">{todayStats.totalPlanned}h</p>
                   </div>
                   <div className="p-4 rounded-xl border bg-card text-center">
-                    <p className="text-sm text-muted-foreground">Temps réalisé</p>
+                    <p className="text-sm text-muted-foreground">{language === 'fr' ? 'Temps réalisé' : 'Completed time'}</p>
                     <p className="text-2xl font-bold">{todayStats.totalCompleted}h</p>
                   </div>
                 </motion.div>
@@ -417,7 +426,7 @@ export default function App() {
         />
       )}
       <AnimatePresence>
-        {!hasSeenTour && currentView === 'main' && (
+        {!hasSeenTour && hasSelectedLanguage && currentView === 'main' && (
             <OnboardingGuide steps={tourSteps} onComplete={() => setHasSeenTour(true)} />
         )}
       </AnimatePresence>

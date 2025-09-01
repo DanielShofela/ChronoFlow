@@ -21,6 +21,13 @@ type TranslationKeys = {
   dailyActivities: string;
   completed: string;
   
+  // Settings
+  showDailyVerse: string;
+  showDailyVerseDescription: string;
+  toggleDailyVerse: string;
+  showActivityDetails: string;
+  showActivityDetailsDescription: string;
+  
   // Offline/Online status
   offlineMode: string;
   offlineDescription: string;
@@ -86,9 +93,16 @@ export const translations: Translations = {
     dailyActivities: 'Activités du jour',
     completed: 'complétés',
     
+    // Settings
+    showDailyVerse: 'Afficher le verset du jour',
+    showDailyVerseDescription: 'Affiche une citation inspirante sur l\'écran d\'accueil.',
+    toggleDailyVerse: 'Activer/Désactiver le verset du jour',
+    showActivityDetails: 'Afficher les détails des activités',
+    showActivityDetailsDescription: 'Affiche tous les créneaux horaires pour chaque activité.',
+    
     // Offline/Online status
     offlineMode: 'Mode hors ligne activé',
-    offlineDescription: "L'application reste entièrement fonctionnelle.",
+    offlineDescription: "L\'application reste entièrement fonctionnelle.",
     onlineMode: 'Connexion rétablie',
     onlineDescription: 'Vous êtes de nouveau connecté à Internet.',
     updateAvailable: 'Mise à jour disponible',
@@ -103,8 +117,8 @@ export const translations: Translations = {
     // Tour steps
     tourWelcomeTitle: 'Bienvenue sur ChronoFlow !',
     tourWelcomeContent: 'Suivez ce guide rapide pour découvrir comment tirer le meilleur parti de votre nouvel outil de gestion du temps.',
-    tourClockTitle: "Votre journée en un coup d'œil",
-    tourClockContent: "Chaque segment de l'horloge représente une heure, colorée selon l'activité que vous avez planifiée. Cliquez sur un segment pour le marquer comme complété.",
+    tourClockTitle: "Votre journée en un coup d\'œil",
+    tourClockContent: "Chaque segment de l\'horloge représente une heure, colorée selon l\'activité que vous avez planifiée. Cliquez sur un segment pour le marquer comme complété.",
     tourActivityListTitle: 'La liste de vos activités',
     tourActivityListContent: "Retrouvez ici le détail de vos activités. Vous pouvez aussi marquer les créneaux comme complétés directement depuis cette liste.",
     tourSettingsTitle: 'Personnalisez votre journée',
@@ -114,13 +128,13 @@ export const translations: Translations = {
     tourDateNavTitle: 'Voyagez dans le temps',
     tourDateNavContent: 'Utilisez ces flèches pour naviguer entre les jours. Pratique pour consulter ou compléter une journée passée.',
     tourPinTitle: 'Horloge flottante',
-    tourPinContent: "Activez l'horloge flottante pour garder un œil sur votre temps même lorsque vous travaillez sur d'autres applications. L'horloge restera visible en mode Picture-in-Picture.",
+    tourPinContent: "Activez l\'horloge flottante pour garder un œil sur votre temps même lorsque vous travaillez sur d\'autres applications. L\'horloge restera visible en mode Picture-in-Picture.",
     tourThemeTitle: 'Adaptez l\'interface',
-    tourThemeContent: "Passez du mode clair au mode sombre d'un simple clic pour un confort visuel optimal.",
+    tourThemeContent: "Passez du mode clair au mode sombre d\'un simple clic pour un confort visuel optimal.",
     tourFaqTitle: 'Besoin d\'aide ?',
     tourFaqContent: "Consultez notre FAQ pour obtenir des réponses à vos questions et mieux comprendre toutes les fonctionnalités de ChronoFlow.",
     tourFinishTitle: 'Vous êtes prêt !',
-    tourFinishContent: "C'est tout pour le moment. Il est temps de vous approprier l'outil et de construire la journée qui vous ressemble. Bonnes découvertes !",
+    tourFinishContent: "C\'est tout pour le moment. Il est temps de vous approprier l\'outil et de construire la journée qui vous ressemble. Bonnes découvertes !",
     tourSkip: 'Passer le guide',
     tourNext: 'Suivant',
     tourPrevious: 'Précédent',
@@ -144,6 +158,13 @@ export const translations: Translations = {
     toggleVisibility: 'Toggle time slots visibility',
     dailyActivities: 'Daily Activities',
     completed: 'completed',
+    
+    // Settings
+    showDailyVerse: 'Show daily verse',
+    showDailyVerseDescription: 'Displays an inspiring quote on the home screen.',
+    toggleDailyVerse: 'Toggle daily verse',
+    showActivityDetails: 'Show activity details',
+    showActivityDetailsDescription: 'Displays all time slots for each activity.',
     
     // Offline/Online status
     offlineMode: 'Offline mode activated',

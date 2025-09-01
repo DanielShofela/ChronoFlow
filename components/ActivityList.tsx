@@ -66,9 +66,9 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => toggleActivityVisibility(activity.id)}
-                  className={`p-1 transition-colors ${hiddenActivities[activity.id] ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                  aria-label={hiddenActivities[activity.id] ? t.showAllHours : t.hideUnselectedHours}
-                  title={hiddenActivities[activity.id] ? t.showAllHours : t.hideUnselectedHours}
+                  className={`p-1 transition-colors ${hiddenActivities[activity.id] ? 'text-muted-foreground hover:text-foreground' : 'text-primary'}`}
+                  aria-label={hiddenActivities[activity.id] ? t.showDetails : t.hideDetails}
+                  title={hiddenActivities[activity.id] ? t.showDetails : t.hideDetails}
                 >
                   {hiddenActivities[activity.id] ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </button>
@@ -80,7 +80,7 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
             </div>
 
             <AnimatePresence>
-              {(!hiddenActivities[activity.id] || showActivityDetails) && (
+              {(hiddenActivities[activity.id] || showActivityDetails) && (
                 <motion.div
                   className="overflow-hidden"
                   {...{
@@ -95,8 +95,9 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
                       // Déterminer quels créneaux afficher en fonction de l'état du masquage
                       let slotsToDisplay = [...activity.slots];
                       
-                      // Si l'activité n'est pas masquée, afficher tous les créneaux de 0 à 23h
-                      if (!hiddenActivities[activity.id]) {
+                      // Si l'activité n'est pas masquée (œil barré), n'afficher que les créneaux sélectionnés
+                      // Si l'activité est masquée (œil ouvert), afficher tous les créneaux de 0 à 23h
+                      if (hiddenActivities[activity.id]) {
                         slotsToDisplay = Array.from({ length: 24 }, (_, i) => i);
                       }
                       
@@ -108,7 +109,7 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
                         const isSelected = activity.slots.includes(hour);
                         
                         // Si on affiche tous les créneaux, on met en évidence ceux qui sont sélectionnés
-                        const buttonStyle = !hiddenActivities[activity.id] && !isSelected
+                        const buttonStyle = hiddenActivities[activity.id] && !isSelected
                           ? "bg-muted/40 text-muted-foreground"
                           : isCompleted
                             ? "bg-green-500 text-white"

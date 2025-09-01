@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { ArrowLeft, Plus, Trash2, Palette, X, Pencil, Check, XCircle, GripVertical, Star, MessageSquare, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
@@ -34,8 +35,8 @@ const ActivityReorderItem = ({
   setEditIconPickerOpen,
   setEditCustomColorOpen,
   handleEditGenerateRandomColor,
-  showActivityDetails,
-  onShowActivityDetailsChange,
+  hiddenActivities,
+  toggleActivityVisibility,
   t,
 }: any) => {
     const controls = useDragControls();
@@ -80,23 +81,45 @@ const ActivityReorderItem = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: activity.color }} />
+                      <button 
+                        onClick={() => toggleActivityVisibility(activity.id)} 
+                        className={`p-1 transition-colors ${!hiddenActivities[activity.id] ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                        aria-label={!hiddenActivities[activity.id] ? t.hideDetails : t.showDetails}
+                        title={!hiddenActivities[activity.id] ? t.hideDetails : t.showDetails}
+                      >
+                        {!hiddenActivities[activity.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                       <button onClick={() => handleStartEditing(activity)} className="p-1 text-muted-foreground hover:text-primary rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
                       <button onClick={() => deleteActivity(activity.id)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">{Array.from({ length: 24 }, (_, i) => (
-                    <button 
-                      key={i}
-                      onClick={() => handleToggleSlot(activity.id, i)}
-                      className={cn(
-                        "px-2 py-1 rounded text-xs font-medium transition-colors", 
-                        activity.slots.includes(i) ? "text-white" : "bg-muted hover:bg-muted/80"
-                      )} 
-                      style={{ backgroundColor: activity.slots.includes(i) ? activity.color : undefined }}
-                    >
-                      {i}h
-                    </button>))}
-                  </div>
+                  <AnimatePresence>
+                    {(!hiddenActivities[activity.id]) && (
+                      <motion.div
+                        className="overflow-hidden"
+                        {...{
+                          initial: { opacity: 0, height: 0, marginTop: 0 },
+                          animate: { opacity: 1, height: 'auto', marginTop: '0.75rem' },
+                          exit: { opacity: 0, height: 0, marginTop: 0 },
+                          transition: { duration: 0.2, ease: "easeInOut" },
+                        }}
+                      >
+                        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">{Array.from({ length: 24 }, (_, i) => (
+                          <button 
+                            key={i}
+                            onClick={() => handleToggleSlot(activity.id, i)}
+                            className={cn(
+                              "px-2 py-1 rounded text-xs font-medium transition-colors", 
+                              activity.slots.includes(i) ? "text-white" : "bg-muted hover:bg-muted/80"
+                            )} 
+                            style={{ backgroundColor: activity.slots.includes(i) ? activity.color : undefined }}
+                          >
+                            {i}h
+                          </button>))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
             )}
         </Reorder.Item>
@@ -104,9 +127,25 @@ const ActivityReorderItem = ({
 };
 
 
-export function SettingsView({ activities, onActivitiesChange, onBack, showVerse, onShowVerseChange, showActivityDetails, onShowActivityDetailsChange }: SettingsViewProps) {
+export default function SettingsView({ activities, onActivitiesChange, onBack, showVerse, onShowVerseChange, showActivityDetails, onShowActivityDetailsChange }: SettingsViewProps) {
   const { theme } = useTheme();
   const { t } = useLanguage();
+  // Par défaut, toutes les activités sont masquées (n'affichent que les heures sélectionnées)
+  const defaultHiddenState = activities.reduce((acc, activity) => {
+    acc[activity.id] = true; // Par défaut, toutes les activités sont masquées
+    return acc;
+  }, {} as { [key: string]: boolean });
+  
+  const [hiddenActivities, setHiddenActivities] = useLocalStorage<{ [key: string]: boolean }>('hiddenActivitiesSettings', defaultHiddenState);
+  
+  // Fonction pour basculer la visibilité d'une activité spécifique
+  const toggleActivityVisibility = (activityId: string) => {
+    setHiddenActivities(prev => ({
+      ...prev,
+      [activityId]: !prev[activityId]
+    }));
+  };
+  
   const [newActivity, setNewActivity] = useState({
     name: '',
     icon: '📝',
@@ -315,8 +354,8 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
                 setEditIconPickerOpen={setEditIconPickerOpen}
                 setEditCustomColorOpen={setEditCustomColorOpen}
                 handleEditGenerateRandomColor={handleEditGenerateRandomColor}
-                showActivityDetails={showActivityDetails}
-                onShowActivityDetailsChange={onShowActivityDetailsChange}
+                hiddenActivities={hiddenActivities}
+                toggleActivityVisibility={toggleActivityVisibility}
                 t={t}
               />
             ))}
@@ -329,8 +368,8 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
         <div className="space-y-4">
           <div className="flex items-center justify-between">
               <div>
-                  <p className="font-medium">Afficher le verset du jour</p>
-                  <p className="text-sm text-muted-foreground">Affiche une citation inspirante sur l'écran d'accueil.</p>
+                  <p className="font-medium">{t.showDailyVerse}</p>
+                  <p className="text-sm text-muted-foreground">{t.showDailyVerseDescription}</p>
               </div>
               <button
                   onClick={() => onShowVerseChange(!showVerse)}
@@ -341,7 +380,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
                   role="switch"
                   aria-checked={showVerse}
               >
-                  <span className="sr-only">Activer/Désactiver le verset du jour</span>
+                  <span className="sr-only">{t.toggleDailyVerse}</span>
                   <span
                       aria-hidden="true"
                       className={cn(
@@ -351,6 +390,8 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
                   />
               </button>
           </div>
+          
+          {/* Le bouton "Show Activity Details" a été retiré et remplacé par un bouton d'œil sur chaque activité */}
           
 
         </div>
