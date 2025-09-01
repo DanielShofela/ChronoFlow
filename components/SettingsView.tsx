@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2, Palette, X, Pencil, Check, XCircle, GripVertical, Star, MessageSquare, Loader2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Palette, X, Pencil, Check, XCircle, GripVertical, Star, MessageSquare, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
 import type { Activity } from '../types';
 import { cn } from '../utils';
 import { predefinedColors } from '../constants';
 import { useTheme } from '../hooks/useTheme';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface SettingsViewProps {
   activities: Activity[];
@@ -13,6 +14,8 @@ interface SettingsViewProps {
   onBack: () => void;
   showVerse: boolean;
   onShowVerseChange: (show: boolean) => void;
+  showActivityDetails: boolean;
+  onShowActivityDetailsChange: (show: boolean) => void;
 }
 
 const ActivityReorderItem = ({
@@ -98,8 +101,9 @@ const ActivityReorderItem = ({
 };
 
 
-export function SettingsView({ activities, onActivitiesChange, onBack, showVerse, onShowVerseChange }: SettingsViewProps) {
+export function SettingsView({ activities, onActivitiesChange, onBack, showVerse, onShowVerseChange, showActivityDetails, onShowActivityDetailsChange }: SettingsViewProps) {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const [newActivity, setNewActivity] = useState({
     name: '',
     icon: '📝',
@@ -315,29 +319,45 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
 
       <div className="p-4 rounded-xl border bg-card">
         <h3 className="font-semibold text-lg mb-2">Préférences</h3>
-        <div className="flex items-center justify-between">
-            <div>
-                <p className="font-medium">Afficher le verset du jour</p>
-                <p className="text-sm text-muted-foreground">Affiche une citation inspirante sur l'écran d'accueil.</p>
-            </div>
-            <button
-                onClick={() => onShowVerseChange(!showVerse)}
-                className={cn(
-                    "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                    showVerse ? 'bg-primary' : 'bg-muted'
-                )}
-                role="switch"
-                aria-checked={showVerse}
-            >
-                <span className="sr-only">Activer/Désactiver le verset du jour</span>
-                <span
-                    aria-hidden="true"
-                    className={cn(
-                        "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                        showVerse ? 'translate-x-5' : 'translate-x-0'
-                    )}
-                />
-            </button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+              <div>
+                  <p className="font-medium">Afficher le verset du jour</p>
+                  <p className="text-sm text-muted-foreground">Affiche une citation inspirante sur l'écran d'accueil.</p>
+              </div>
+              <button
+                  onClick={() => onShowVerseChange(!showVerse)}
+                  className={cn(
+                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                      showVerse ? 'bg-primary' : 'bg-muted'
+                  )}
+                  role="switch"
+                  aria-checked={showVerse}
+              >
+                  <span className="sr-only">Activer/Désactiver le verset du jour</span>
+                  <span
+                      aria-hidden="true"
+                      className={cn(
+                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                          showVerse ? 'translate-x-5' : 'translate-x-0'
+                      )}
+                  />
+              </button>
+          </div>
+          
+          <div className="flex items-center justify-between">
+              <div>
+                  <p className="font-medium">{showActivityDetails ? t.hideDetails : t.showDetails}</p>
+                  <p className="text-sm text-muted-foreground">{showActivityDetails ? "Masque les détails des activités par défaut." : "Affiche les détails des activités par défaut."}</p>
+              </div>
+              <button
+                  onClick={() => onShowActivityDetailsChange(!showActivityDetails)}
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
+                  aria-label={showActivityDetails ? t.hideDetails : t.showDetails}
+              >
+                  {showActivityDetails ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+          </div>
         </div>
       </div>
 

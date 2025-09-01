@@ -2,9 +2,11 @@ import React, { useState, useMemo, useEffect } from "react";
 // FIX: Removed subDays as it's not exported in the project's version of date-fns. Will use addDays with a negative value instead.
 import { format, addDays, getDayOfYear } from 'date-fns';
 import { fr } from "date-fns/locale/fr";
+import { enUS } from "date-fns/locale/en-US";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, Download, HelpCircle } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useLanguage } from "./hooks/useLanguage";
 import type { Activity, CompletedSlot, ViewType } from "./types";
 import { defaultActivities } from "./constants";
 import { verses } from "./data/verses";
@@ -13,6 +15,7 @@ import { ActivityList } from "./components/ActivityList";
 import { SettingsView } from "./components/SettingsView";
 import { StatsView } from "./components/StatsView";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { LanguageToggle } from "./components/LanguageToggle";
 import { DailyVerse } from "./components/DailyVerse";
 import { PictureInPictureClock } from "./components/PictureInPictureClock";
 import { OnboardingGuide, type TourStep } from "./components/OnboardingGuide";
@@ -20,7 +23,12 @@ import { UpdateToast } from "./components/UpdateToast";
 import { OfflineToast } from "./components/OfflineToast";
 import { FAQView } from "./components/FAQView";
 
-const tourSteps: TourStep[] = [
+export default function App() {
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'fr' ? fr : enUS;
+  const [showActivityDetails, setShowActivityDetails] = useLocalStorage('showActivityDetails', true);
+  
+  const tourSteps: TourStep[] = [
   {
     selector: '', // No selector for a welcome modal
     title: "Bienvenue sur ChronoFlow !",
@@ -52,37 +60,36 @@ const tourSteps: TourStep[] = [
   },
   {
     selector: '[data-tour-id="date-nav"]',
-    title: 'Voyagez dans le temps',
-    content: 'Utilisez ces flèches pour naviguer entre les jours. Pratique pour consulter ou compléter une journée passée.',
+    title: t.tourDateNavTitle,
+    content: t.tourDateNavContent,
     position: 'bottom',
   },
   {
     selector: '[data-tour-id="pin-button"]',
-    title: 'Horloge flottante',
-    content: "Activez l'horloge flottante pour garder un œil sur votre temps même lorsque vous travaillez sur d'autres applications. L'horloge restera visible en mode Picture-in-Picture.",
+    title: t.tourPinTitle,
+    content: t.tourPinContent,
     position: 'bottom',
   },
   {
     selector: '[data-tour-id="theme-toggle"]',
-    title: 'Adaptez l\'interface',
-    content: "Passez du mode clair au mode sombre d'un simple clic pour un confort visuel optimal.",
+    title: t.tourThemeTitle,
+    content: t.tourThemeContent,
     position: 'bottom',
   },
   {
     selector: '[data-tour-id="faq-button"]',
-    title: 'Besoin d\'aide ?',
-    content: "Consultez notre FAQ pour obtenir des réponses à vos questions et mieux comprendre toutes les fonctionnalités de ChronoFlow.",
+    title: t.tourFaqTitle,
+    content: t.tourFaqContent,
     position: 'bottom',
   },
   {
     selector: '', // No selector for the final modal
-    title: 'Vous êtes prêt !',
-    content: "C'est tout pour le moment. Il est temps de vous approprier l'outil et de construire la journée qui vous ressemble. Bonnes découvertes !",
+    title: t.tourFinishTitle,
+    content: t.tourFinishContent,
   },
 ];
 
 
-export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
   const [activities, setActivities] = useLocalStorage<Activity[]>('activities', defaultActivities);
@@ -95,6 +102,9 @@ export default function App() {
   const [showUpdateToast, setShowUpdateToast] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [showOfflineToast, setShowOfflineToast] = useState(false);
+  const [hasUpdate, setHasUpdate] = useState(false);
+  const [isOnlineToast, setIsOnlineToast] = useState(false);
 
   useEffect(() => {
     if (typeof document !== 'undefined' && 'pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
@@ -106,6 +116,7 @@ export default function App() {
       // See vite.config.ts and the PWA plugin documentation for more info
       if (sessionStorage.getItem('swUpdate')) {
         setShowUpdateToast(true);
+        setHasUpdate(true);
         sessionStorage.removeItem('swUpdate');
         setTimeout(() => setShowUpdateToast(false), 5000);
       }
@@ -125,8 +136,19 @@ export default function App() {
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => {
+      setIsOffline(true);
+      setShowOfflineToast(true);
+      setIsOnlineToast(false);
+    };
+    
+    const handleOnline = () => {
+      setIsOffline(false);
+      setShowOfflineToast(true);
+      setIsOnlineToast(true);
+      setTimeout(() => setShowOfflineToast(false), 5000);
+    };
+    
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
 
@@ -214,7 +236,7 @@ export default function App() {
           <div className="flex items-center gap-2 md:gap-4 flex-wrap justify-center">
             <div data-tour-id="date-nav" className="flex items-center gap-2 bg-muted rounded-lg p-1">
               <button onClick={handlePreviousDay} className="p-2 hover:bg-background rounded-md transition-colors"><ChevronLeft className="w-5 h-5" /></button>
-              <span className="px-3 py-1 text-sm font-medium whitespace-nowrap">{format(selectedDate, 'dd MMMM yyyy', { locale: fr })}</span>
+              <span className="px-3 py-1 text-sm font-medium whitespace-nowrap">{format(selectedDate, 'dd MMMM yyyy', { locale: dateLocale })}</span>
               <button onClick={handleNextDay} className="p-2 hover:bg-background rounded-md transition-colors"><ChevronRight className="w-5 h-5" /></button>
             </div>
             <div className="flex items-center gap-2">
@@ -263,6 +285,7 @@ export default function App() {
                 <div data-tour-id="theme-toggle">
                   <ThemeToggle />
                 </div>
+                <LanguageToggle />
             </div>
           </div>
         </motion.header>
@@ -296,11 +319,12 @@ export default function App() {
                   </motion.div>
                   <div data-tour-id="activity-list" className="lg:col-span-2">
                     <ActivityList
-                      activities={activities}
-                      completedSlots={completedSlotsSet}
-                      selectedDate={selectedDate}
-                      onSlotToggle={handleSlotToggle}
-                    />
+                activities={activities}
+                completedSlots={completedSlotsSet}
+                selectedDate={selectedDate}
+                onSlotToggle={handleSlotToggle}
+                showActivityDetails={showActivityDetails}
+              />
                   </div>
                 </div>
                  <motion.div 
@@ -331,6 +355,8 @@ export default function App() {
                 onBack={() => setCurrentView('main')}
                 showVerse={showVerse}
                 onShowVerseChange={setShowVerse}
+                showActivityDetails={showActivityDetails}
+                onShowActivityDetailsChange={setShowActivityDetails}
               />
             )}
 
@@ -365,7 +391,13 @@ export default function App() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {isOffline && <OfflineToast />}
+        {showOfflineToast && (
+          <OfflineToast 
+            isOffline={isOffline} 
+            hasUpdate={hasUpdate} 
+            onClose={() => setShowOfflineToast(false)} 
+          />
+        )}
       </AnimatePresence>
       <AnimatePresence>
       {showUpdateToast && <UpdateToast onClose={() => setShowUpdateToast(false)} />}

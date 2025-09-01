@@ -4,17 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import type { Activity } from '../types';
 import { cn } from '../utils';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface ActivityListProps {
   activities: Activity[];
   completedSlots: Set<string>;
   selectedDate: Date;
   onSlotToggle: (hour: number) => void;
+  showActivityDetails: boolean;
 }
 
-export function ActivityList({ activities, completedSlots, selectedDate, onSlotToggle }: ActivityListProps) {
+export function ActivityList({ activities, completedSlots, selectedDate, onSlotToggle, showActivityDetails }: ActivityListProps) {
   const getSlotKey = (hour: number) => `${format(selectedDate, 'yyyy-MM-dd')}-${hour}`;
   const [expandedActivities, setExpandedActivities] = useState<{ [key: string]: boolean }>({});
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-4">
@@ -50,7 +53,7 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
                 <button
                   onClick={() => setExpandedActivities(prev => ({ ...prev, [activity.id]: !isExpanded }))}
                   className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={isExpanded ? "Cacher les détails" : "Afficher les détails"}
+                  aria-label={isExpanded ? t.hideDetails : t.showDetails}
                 >
                   {isExpanded ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -62,7 +65,7 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
             </div>
 
             <AnimatePresence>
-              {isExpanded && (
+              {(isExpanded || showActivityDetails) && (
                 <motion.div
                   className="overflow-hidden"
                   {...{
