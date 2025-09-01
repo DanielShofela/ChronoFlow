@@ -14,6 +14,8 @@ type TranslationKeys = {
   close: string;
   showDetails: string;
   hideDetails: string;
+  dailyActivities: string;
+  completed: string;
   
   // Offline/Online status
   offlineMode: string;
@@ -72,6 +74,8 @@ export const translations: Translations = {
     close: 'Fermer',
     showDetails: 'Afficher les détails',
     hideDetails: 'Masquer les détails',
+    dailyActivities: 'Activités du jour',
+    completed: 'complétés',
     
     // Offline/Online status
     offlineMode: 'Mode hors ligne activé',
@@ -124,6 +128,8 @@ export const translations: Translations = {
     close: 'Close',
     showDetails: 'Show details',
     hideDetails: 'Hide details',
+    dailyActivities: 'Daily Activities',
+    completed: 'completed',
     
     // Offline/Online status
     offlineMode: 'Offline mode activated',

@@ -31,31 +31,31 @@ export default function App() {
   const tourSteps: TourStep[] = [
   {
     selector: '', // No selector for a welcome modal
-    title: "Bienvenue sur ChronoFlow !",
-    content: "Suivez ce guide rapide pour découvrir comment tirer le meilleur parti de votre nouvel outil de gestion du temps.",
+    title: t.tourWelcomeTitle,
+    content: t.tourWelcomeContent,
   },
   {
     selector: '[data-tour-id="clock"]',
-    title: "Votre journée en un coup d'œil",
-    content: "Chaque segment de l'horloge représente une heure, colorée selon l'activité que vous avez planifiée. Cliquez sur un segment pour le marquer comme complété.",
+    title: t.tourClockTitle,
+    content: t.tourClockContent,
     position: 'right',
   },
   {
     selector: '[data-tour-id="activity-list"]',
-    title: 'La liste de vos activités',
-    content: "Retrouvez ici le détail de vos activités. Vous pouvez aussi marquer les créneaux comme complétés directement depuis cette liste.",
+    title: t.tourActivityListTitle,
+    content: t.tourActivityListContent,
     position: 'left',
   },
   {
     selector: '[data-tour-id="settings-button"]',
-    title: 'Personnalisez votre journée',
-    content: "Les activités par défaut ne sont que des suggestions. Cliquez ici pour créer les vôtres, changer les couleurs, les icônes et définir vos propres créneaux.",
+    title: t.tourSettingsTitle,
+    content: t.tourSettingsContent,
     position: 'bottom',
   },
   {
     selector: '[data-tour-id="stats-button"]',
-    title: 'Suivez vos progrès',
-    content: 'Visualisez vos statistiques pour rester motivé et ajuster votre routine. Analysez vos journées, semaines, mois et même années !',
+    title: t.tourStatsTitle,
+    content: t.tourStatsContent,
     position: 'bottom',
   },
   {

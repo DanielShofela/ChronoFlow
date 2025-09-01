@@ -21,7 +21,7 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Activités du jour</h3>
+      <h3 className="text-lg font-semibold">{t.dailyActivities}</h3>
       {activities.map(activity => {
         const completedCount = activity.slots.filter(hour =>
           completedSlots.has(getSlotKey(hour))
@@ -45,7 +45,7 @@ export function ActivityList({ activities, completedSlots, selectedDate, onSlotT
                 <div>
                   <h4 className="font-medium">{activity.name}</h4>
                   <p className="text-sm text-muted-foreground">
-                    {completedCount}/{activity.slots.length} complétés
+                    {completedCount}/{activity.slots.length} {t.completed}
                   </p>
                 </div>
               </div>

@@ -34,6 +34,9 @@ const ActivityReorderItem = ({
   setEditIconPickerOpen,
   setEditCustomColorOpen,
   handleEditGenerateRandomColor,
+  showActivityDetails,
+  onShowActivityDetailsChange,
+  t,
 }: any) => {
     const controls = useDragControls();
 
@@ -76,6 +79,13 @@ const ActivityReorderItem = ({
                       <div><h4 className="font-medium">{activity.name}</h4><p className="text-sm text-muted-foreground">{activity.slots.length} créneaux</p></div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onShowActivityDetailsChange(!showActivityDetails)}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showActivityDetails ? t.hideDetails : t.showDetails}
+                      >
+                        {showActivityDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: activity.color }} />
                       <button onClick={() => handleStartEditing(activity)} className="p-1 text-muted-foreground hover:text-primary rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
                       <button onClick={() => deleteActivity(activity.id)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
@@ -311,6 +321,9 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
                 setEditIconPickerOpen={setEditIconPickerOpen}
                 setEditCustomColorOpen={setEditCustomColorOpen}
                 handleEditGenerateRandomColor={handleEditGenerateRandomColor}
+                showActivityDetails={showActivityDetails}
+                onShowActivityDetailsChange={onShowActivityDetailsChange}
+                t={t}
               />
             ))}
           </AnimatePresence>
@@ -345,19 +358,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
               </button>
           </div>
           
-          <div className="flex items-center justify-between">
-              <div>
-                  <p className="font-medium">{showActivityDetails ? t.hideDetails : t.showDetails}</p>
-                  <p className="text-sm text-muted-foreground">{showActivityDetails ? "Masque les détails des activités par défaut." : "Affiche les détails des activités par défaut."}</p>
-              </div>
-              <button
-                  onClick={() => onShowActivityDetailsChange(!showActivityDetails)}
-                  className="p-2 rounded-lg hover:bg-muted transition-colors"
-                  aria-label={showActivityDetails ? t.hideDetails : t.showDetails}
-              >
-                  {showActivityDetails ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-          </div>
+
         </div>
       </div>
 
