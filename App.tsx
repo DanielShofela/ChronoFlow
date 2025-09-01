@@ -4,7 +4,7 @@ import { format, addDays, getDayOfYear } from 'date-fns';
 import { fr } from "date-fns/locale/fr";
 import { enUS } from "date-fns/locale/en-US";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, Download, HelpCircle } from "lucide-react";
+import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, Download, HelpCircle, Eye, EyeOff } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useLanguage } from "./hooks/useLanguage";
 import type { Activity, CompletedSlot, ViewType } from "./types";
@@ -112,15 +112,29 @@ export default function App() {
     }
     
     const handleSWUpdate = () => {
-      // This is a custom event fired from the service worker registration
-      // See vite.config.ts and the PWA plugin documentation for more info
-      if (sessionStorage.getItem('swUpdate')) {
+      // Vérifier si une mise à jour est disponible, en utilisant localStorage pour la persistance
+      // même après un redémarrage de l'application en mode hors ligne
+      const hasStoredUpdate = localStorage.getItem('swUpdate') || sessionStorage.getItem('swUpdate');
+      
+      if (hasStoredUpdate) {
         setShowUpdateToast(true);
         setHasUpdate(true);
-        sessionStorage.removeItem('swUpdate');
+        
+        // Ne pas supprimer l'indicateur de mise à jour si l'utilisateur est hors ligne
+        // pour qu'il puisse être notifié même après un redémarrage de l'application
+        if (navigator.onLine) {
+          localStorage.removeItem('swUpdate');
+          sessionStorage.removeItem('swUpdate');
+        }
+        
         setTimeout(() => setShowUpdateToast(false), 5000);
       }
     };
+    
+    const reloadApp = () => {
+      window.location.reload();
+    };
+    
     handleSWUpdate(); // Check on initial load
     window.addEventListener('load', handleSWUpdate);
 
@@ -260,6 +274,7 @@ export default function App() {
 						</motion.div>
 					)}
 				</AnimatePresence>
+
                 <button data-tour-id="settings-button" onClick={() => setCurrentView('settings')} className="p-2 hover:bg-muted rounded-md transition-colors"><Settings className="w-5 h-5" /></button>
                 <button data-tour-id="stats-button" onClick={() => setCurrentView('stats')} className="p-2 hover:bg-muted rounded-md transition-colors"><BarChart3 className="w-5 h-5" /></button>
                 {isPipSupported && (
@@ -395,7 +410,8 @@ export default function App() {
           <OfflineToast 
             isOffline={isOffline} 
             hasUpdate={hasUpdate} 
-            onClose={() => setShowOfflineToast(false)} 
+            onClose={() => setShowOfflineToast(false)}
+            onReload={reloadApp}
           />
         )}
       </AnimatePresence>

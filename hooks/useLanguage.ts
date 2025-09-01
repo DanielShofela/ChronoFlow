@@ -12,6 +12,8 @@ export function useLanguage() {
 
   const toggleLanguage = () => {
     setLanguage(language === 'fr' ? 'en' : 'fr');
+    // Recharger la page pour appliquer la traduction à tous les textes
+    window.location.reload();
   };
 
   return { language, setLanguage, toggleLanguage, t };

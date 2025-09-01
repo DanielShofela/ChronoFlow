@@ -7,9 +7,10 @@ interface OfflineToastProps {
   isOffline: boolean;
   hasUpdate: boolean;
   onClose: () => void;
+  onReload?: () => void;
 }
 
-export function OfflineToast({ isOffline, hasUpdate, onClose }: OfflineToastProps) {
+export function OfflineToast({ isOffline, hasUpdate, onClose, onReload }: OfflineToastProps) {
   const { t } = useLanguage();
   return (
     <div className="fixed bottom-4 left-4 z-[200]">
@@ -32,6 +33,15 @@ export function OfflineToast({ isOffline, hasUpdate, onClose }: OfflineToastProp
                   <RefreshCw className="w-4 h-4" />
                   {t.updateAvailableOffline}
                 </span>
+              )}
+              {!isOffline && hasUpdate && (
+                <button 
+                  onClick={onReload} 
+                  className="block mt-2 px-3 py-1 bg-white text-green-600 rounded-md hover:bg-white/90 transition-colors flex items-center gap-1"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {t.reloadForUpdate}
+                </button>
               )}
             </p>
           </div>

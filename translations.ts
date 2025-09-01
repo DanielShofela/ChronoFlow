@@ -14,6 +14,8 @@ type TranslationKeys = {
   close: string;
   showDetails: string;
   hideDetails: string;
+  showAllHours: string;
+  hideUnselectedHours: string;
   dailyActivities: string;
   completed: string;
   
@@ -24,6 +26,7 @@ type TranslationKeys = {
   onlineDescription: string;
   updateAvailable: string;
   updateAvailableOffline: string;
+  reloadForUpdate: string;
   
   // Navigation
   settings: string;
@@ -74,6 +77,9 @@ export const translations: Translations = {
     close: 'Fermer',
     showDetails: 'Afficher les détails',
     hideDetails: 'Masquer les détails',
+    showAllHours: 'Afficher toutes les heures',
+    hideUnselectedHours: 'Masquer les heures non sélectionnées',
+    toggleVisibility: 'Basculer la visibilité des créneaux',
     dailyActivities: 'Activités du jour',
     completed: 'complétés',
     
@@ -84,6 +90,7 @@ export const translations: Translations = {
     onlineDescription: 'Vous êtes de nouveau connecté à Internet.',
     updateAvailable: 'Mise à jour disponible',
     updateAvailableOffline: 'Une mise à jour sera installée lorsque vous serez en ligne.',
+    reloadForUpdate: 'Recharger pour mettre à jour',
     
     // Navigation
     settings: 'Paramètres',
@@ -128,6 +135,9 @@ export const translations: Translations = {
     close: 'Close',
     showDetails: 'Show details',
     hideDetails: 'Hide details',
+    showAllHours: 'Show all hours',
+    hideUnselectedHours: 'Hide unselected hours',
+    toggleVisibility: 'Toggle time slots visibility',
     dailyActivities: 'Daily Activities',
     completed: 'completed',
     
@@ -138,6 +148,7 @@ export const translations: Translations = {
     onlineDescription: 'You are connected to the Internet again.',
     updateAvailable: 'Update available',
     updateAvailableOffline: 'An update will be installed when you are online.',
+    reloadForUpdate: 'Reload to update',
     
     // Navigation
     settings: 'Settings',
