@@ -106,6 +106,10 @@ export default function App() {
   const [hasUpdate, setHasUpdate] = useState(false);
   const [isOnlineToast, setIsOnlineToast] = useState(false);
 
+  const reloadApp = () => {
+    window.location.reload();
+  };
+
   useEffect(() => {
     if (typeof document !== 'undefined' && 'pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
         setIsPipSupported(true);
@@ -117,6 +121,7 @@ export default function App() {
       const hasStoredUpdate = localStorage.getItem('swUpdate') || sessionStorage.getItem('swUpdate');
       
       if (hasStoredUpdate) {
+        console.log('Mise à jour détectée via localStorage/sessionStorage');
         setShowUpdateToast(true);
         setHasUpdate(true);
         
@@ -131,12 +136,23 @@ export default function App() {
       }
     };
     
-    const reloadApp = () => {
-      window.location.reload();
+    // Gestionnaire pour l'événement personnalisé de mise à jour du service worker
+    const handleSWUpdateAvailable = () => {
+      console.log('Événement de mise à jour du service worker reçu');
+      setShowUpdateToast(true);
+      setHasUpdate(true);
+      setTimeout(() => setShowUpdateToast(false), 5000);
     };
     
-    handleSWUpdate(); // Check on initial load
+    handleSWUpdate(); // Vérifier au chargement initial
     window.addEventListener('load', handleSWUpdate);
+    window.addEventListener('sw-update-available', handleSWUpdateAvailable);
+    
+    // Nettoyage des écouteurs d'événements
+    return () => {
+      window.removeEventListener('load', handleSWUpdate);
+      window.removeEventListener('sw-update-available', handleSWUpdateAvailable);
+    };
 
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -416,7 +432,7 @@ export default function App() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-      {showUpdateToast && <UpdateToast onClose={() => setShowUpdateToast(false)} />}
+      {showUpdateToast && <UpdateToast onClose={() => setShowUpdateToast(false)} onReload={reloadApp} />}
       </AnimatePresence>
     </div>
   );

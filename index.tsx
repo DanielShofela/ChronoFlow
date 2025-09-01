@@ -10,10 +10,28 @@ if (!rootElement) {
 }
 
 // Configuration de la vérification périodique des mises à jour du service worker
-const intervalMS = 60 * 60 * 1000; // Vérifier toutes les heures
+const intervalMS = 60 * 1000; // Vérifier toutes les minutes pour le développement, à ajuster en production
 
 const updateSW = registerSW({
+  // Activer les mises à jour immédiates
+  immediate: true,
+  // Callback lorsqu'une mise à jour est disponible
+  onNeedRefresh() {
+    console.log('Une mise à jour est disponible!');
+    // Stocker l'information de mise à jour disponible
+    localStorage.setItem('swUpdate', 'true');
+    sessionStorage.setItem('swUpdate', 'true');
+    // Déclencher un événement personnalisé pour informer l'application
+    window.dispatchEvent(new CustomEvent('sw-update-available'));
+  },
+  // Callback lorsque le service worker est prêt pour le mode hors ligne
+  onOfflineReady() {
+    console.log('L\'application est prête pour le mode hors ligne');
+  },
+  // Callback lorsque le service worker est enregistré
   onRegisteredSW(swUrl, r) {
+    console.log('Service Worker enregistré à:', swUrl);
+    // Vérification périodique des mises à jour
     r && setInterval(async () => {
       if (r.installing || !navigator) return;
 
@@ -22,6 +40,7 @@ const updateSW = registerSW({
 
       // Vérifier les mises à jour du service worker
       try {
+        console.log('Vérification des mises à jour...');
         const resp = await fetch(swUrl, {
           cache: 'no-store',
           headers: {
@@ -31,16 +50,19 @@ const updateSW = registerSW({
         });
 
         if (resp?.status === 200) {
-          // Si une mise à jour est disponible, stocker cette information dans localStorage
-          // pour l'afficher même lorsque l'utilisateur est hors ligne et après redémarrage
-          localStorage.setItem('swUpdate', 'true');
-          sessionStorage.setItem('swUpdate', 'true');
-          await r.update();
+          console.log('Mise à jour potentielle détectée, vérification...');
+          // Forcer la mise à jour du service worker
+          const updateResult = await r.update();
+          console.log('Résultat de la mise à jour:', updateResult);
         }
       } catch (error) {
         console.error('Erreur lors de la vérification des mises à jour:', error);
       }
     }, intervalMS);
+  },
+  // Callback en cas d'erreur d'enregistrement
+  onRegisterError(error) {
+    console.error('Erreur lors de l\'enregistrement du service worker:', error);
   }
 });
 

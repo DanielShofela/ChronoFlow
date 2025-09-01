@@ -12,10 +12,12 @@ type TranslationKeys = {
   delete: string;
   edit: string;
   close: string;
+  reload: string;
   showDetails: string;
   hideDetails: string;
   showAllHours: string;
   hideUnselectedHours: string;
+  toggleVisibility: string;
   dailyActivities: string;
   completed: string;
   
@@ -75,6 +77,7 @@ export const translations: Translations = {
     delete: 'Supprimer',
     edit: 'Modifier',
     close: 'Fermer',
+    reload: 'Recharger',
     showDetails: 'Afficher les détails',
     hideDetails: 'Masquer les détails',
     showAllHours: 'Afficher toutes les heures',
@@ -133,6 +136,7 @@ export const translations: Translations = {
     delete: 'Delete',
     edit: 'Edit',
     close: 'Close',
+    reload: 'Reload',
     showDetails: 'Show details',
     hideDetails: 'Hide details',
     showAllHours: 'Show all hours',

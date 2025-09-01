@@ -79,13 +79,6 @@ const ActivityReorderItem = ({
                       <div><h4 className="font-medium">{activity.name}</h4><p className="text-sm text-muted-foreground">{activity.slots.length} créneaux</p></div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleToggleSlot(activity.id, -1)} // Utiliser -1 comme valeur spéciale pour indiquer le toggle de visibilité
-                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label={t.toggleVisibility}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: activity.color }} />
                       <button onClick={() => handleStartEditing(activity)} className="p-1 text-muted-foreground hover:text-primary rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
                       <button onClick={() => deleteActivity(activity.id)} className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
@@ -153,25 +146,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
   };
   
   const handleToggleSlot = (activityId: string, hour: number) => {
-    // Si hour est -1, c'est une demande de basculement de visibilité
-    if (hour === -1) {
-      // Récupérer l'état actuel des activités masquées depuis localStorage
-      const hiddenActivitiesStr = localStorage.getItem('hiddenActivities');
-      if (hiddenActivitiesStr) {
-        try {
-          const hiddenActivities = JSON.parse(hiddenActivitiesStr);
-          // Basculer l'état de visibilité pour cette activité
-          hiddenActivities[activityId] = !hiddenActivities[activityId];
-          // Sauvegarder dans localStorage
-          localStorage.setItem('hiddenActivities', JSON.stringify(hiddenActivities));
-        } catch (e) {
-          console.error('Erreur lors de la manipulation des activités masquées:', e);
-        }
-      }
-      return;
-    }
-    
-    // Sinon, c'est une demande de basculement de créneau horaire
+    // Gestion du basculement de créneau horaire
     onActivitiesChange(activities.map(activity => {
       if (activity.id === activityId) {
         const slots = activity.slots;
