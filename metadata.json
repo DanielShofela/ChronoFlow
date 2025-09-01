@@ -1,0 +1,5 @@
+{
+  "name": "ChronoFlow",
+  "description": "A daily activity tracker with a 24-hour clock visualization to help you manage and reflect on your time.",
+  "requestFramePermissions": []
+}
