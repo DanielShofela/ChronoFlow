@@ -325,10 +325,31 @@ export default function App() {
                 <div data-tour-id="theme-toggle">
                   <ThemeToggle />
                 </div>
-                <LanguageToggle />
+                  <LanguageToggle />
+                </div>
+                <AnimatePresence>
+					{installPromptEvent && (
+						<motion.div
+							initial={{ opacity: 0, scale: 0.8 }}
+							animate={{ opacity: 1, scale: 1 }}
+							exit={{ opacity: 0, scale: 0.8 }}
+							transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+						>
+							<button
+								onClick={handleInstallClick}
+								className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+								aria-label="Installer l'application"
+								title="Installer l'application"
+							>
+								<Download className="w-5 h-5" />
+								<span className="hidden sm:inline text-sm font-medium">Installer</span>
+							</button>
+						</motion.div>
+					)}
+				</AnimatePresence>
+              </div>
             </div>
-          </div>
-        </motion.header>
+          </motion.header>
 
         <main>
           <AnimatePresence mode="wait">
