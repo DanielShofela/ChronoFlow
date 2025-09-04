@@ -18,6 +18,7 @@ import { SettingsView } from "./components/SettingsView";
 import { StatsView } from "./components/StatsView";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { LanguageToggle } from "./components/LanguageToggle";
+import { VersionNotification } from "./components/VersionNotification";
 import { DailyVerse } from "./components/DailyVerse";
 import { PictureInPictureClock } from "./components/PictureInPictureClock";
 import { OnboardingGuide, type TourStep } from "./components/OnboardingGuide";
@@ -425,6 +426,7 @@ export default function App() {
       <AnimatePresence>
       {showUpdateToast && <UpdateToast onClose={() => setShowUpdateToast(false)} />}
       </AnimatePresence>
+      <VersionNotification />
     </div>
   );
 }
