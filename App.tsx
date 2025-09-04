@@ -19,6 +19,7 @@ import { StatsView } from "./components/StatsView";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { VersionNotification } from "./components/VersionNotification";
+import { useAnalytics } from "./hooks/useAnalytics";
 import { DailyVerse } from "./components/DailyVerse";
 import { PictureInPictureClock } from "./components/PictureInPictureClock";
 import { OnboardingGuide, type TourStep } from "./components/OnboardingGuide";
@@ -30,6 +31,7 @@ import { InstallButton } from "./components/InstallButton";
 
 export default function App() {
   const { t, language } = useLanguage();
+  const analytics = useAnalytics();
   const dateLocale = language === 'fr' ? fr : enUS;
   const [showActivityDetails, setShowActivityDetails] = useLocalStorage('showActivityDetails', true);
   
