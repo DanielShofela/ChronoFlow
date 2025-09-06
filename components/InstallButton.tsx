@@ -97,24 +97,45 @@ export function InstallButton() {
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      >
-        <button
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="bg-card text-card-foreground rounded-lg p-4 mb-3 shadow-lg max-w-xs"
+        >
+          <p className="text-sm font-medium">
+            {t.installDescription || "📱 Installez ChronoFlow pour un accès rapide et une meilleure expérience ! Travaillez même hors connexion."}
+          </p>
+        </motion.div>
+        <motion.button
           onClick={handleInstallClick}
-          className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+          className="flex items-center gap-3 px-6 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg hover:bg-primary/90"
           aria-label="Installer l'application"
           title="Installer ChronoFlow sur votre appareil"
+          initial={{ scale: 1 }}
+          animate={{
+            scale: [1, 1.05, 1],
+            boxShadow: [
+              "0 4px 6px rgba(0, 0, 0, 0.1)",
+              "0 10px 15px rgba(59, 130, 246, 0.3)",
+              "0 4px 6px rgba(0, 0, 0, 0.1)"
+            ]
+          }}
+          transition={{
+            repeat: Infinity,
+            repeatType: "reverse",
+            duration: 2
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <Download className="w-5 h-5" />
-          <span className="hidden sm:inline text-sm font-medium">
-            {installPromptEvent ? 'Installer' : 'Installer l\'app'}
+          <Download className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="text-sm sm:text-base font-medium">
+            {installPromptEvent ? t.install || 'Installer' : t.install || 'Installer'}
           </span>
-        </button>
-      </motion.div>
+        </motion.button>
+      </div>
     </AnimatePresence>
   );
 }

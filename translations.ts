@@ -6,6 +6,7 @@ type TranslationKeys = {
   // Common
   appName: string;
   install: string;
+  installDescription: string;
   back: string;
   save: string;
   cancel: string;
