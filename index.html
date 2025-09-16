@@ -8,7 +8,11 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'G-VGB5GGBJND');
+      // Configuration avec consentement par défaut refusé
+      gtag('config', 'G-VGB5GGBJND', {
+        'consent_mode': 'default',
+        'analytics_storage': 'denied'
+      });
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

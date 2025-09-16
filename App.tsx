@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { format, addDays, getDayOfYear, isBefore, getDay } from 'date-fns';
 import { fr } from "date-fns/locale/fr";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, HelpCircle, Lock } from "lucide-react";
 import { trackEvent, trackPageView, AnalyticsEvents } from "./utils/analytics";
 import { useLocalStorage } from "./hooks/useLocalStorage";
@@ -24,6 +25,7 @@ import { OnboardingGuide } from "./components/OnboardingGuide";
 import { BottomNavBar } from "./components/BottomNavBar";
 
 export default function App() {
+  const [cookiesAccepted, setCookiesAccepted] = useLocalStorage<boolean>('cookies-accepted', false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
   
@@ -380,9 +382,32 @@ export default function App() {
   };
 
 
+  // Gestion du consentement aux cookies
+  const handleCookiesAccept = () => {
+    setCookiesAccepted(true);
+    // Réactive GA
+    window.gtag('consent', 'update', {
+      'analytics_storage': 'granted'
+    });
+  };
+
+  const handleCookiesDecline = () => {
+    setCookiesAccepted(false);
+    // Désactive GA
+    window.gtag('consent', 'update', {
+      'analytics_storage': 'denied'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
       {showOnboarding && <OnboardingGuide onClose={handleOnboardingClose} />}
+      {!cookiesAccepted && (
+        <CookieConsent
+          onAccept={handleCookiesAccept}
+          onDecline={handleCookiesDecline}
+        />
+      )}
       <div className="container mx-auto p-4 max-w-7xl pb-24 md:pb-4">
         <motion.header
           className="flex flex-col sm:flex-row items-center justify-between mb-8 p-4 rounded-2xl bg-card border shadow-sm"
