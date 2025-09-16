@@ -31,14 +31,15 @@ export function CookieConsent({ onAccept, onDecline }: CookieConsentProps) {
           <p>
             Nous utilisons des cookies et des outils d'analyse pour améliorer votre expérience. 
             En continuant à utiliser ChronoFlow, vous acceptez notre{' '}
-            <a 
-              href="/privacy-policy" 
-              className="text-primary hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button 
+              onClick={() => {
+                const customEvent = new CustomEvent('navigate', { detail: { view: 'privacy' } });
+                window.dispatchEvent(customEvent);
+              }}
+              className="text-primary hover:underline inline-block"
             >
               politique de confidentialité
-            </a>.
+            </button>.
           </p>
         </div>
         <div className="flex items-center gap-3">

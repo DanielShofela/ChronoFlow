@@ -111,7 +111,9 @@ function ActivityForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim()) {
+      return;
+    }
 
     const activityToSave: Activity = {
       ...formData,
@@ -374,7 +376,9 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
   };
   
   const handleDelete = () => {
-    if (!activityToDelete) return;
+    if (!activityToDelete) {
+      return;
+    }
     trackEvent(AnalyticsEvents.ACTIVITY_UPDATE, { 
       activityName: activityToDelete.name,
       action: 'delete'
@@ -413,7 +417,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Gérer les activités</h3>
               {notificationPermission === 'granted' && (
-                <Bell className="w-4 h-4 text-green-500" title="Les notifications sont activées" />
+                <Bell className="w-4 h-4 text-green-500" aria-label="Les notifications sont activées" />
               )}
             </div>
             <motion.button 
@@ -446,7 +450,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
                                 <span className="text-2xl">{activity.icon}</span>
                                 <span className="font-medium">{activity.name}</span>
                                 {activity.reminderMinutes && activity.reminderMinutes > 0 && (
-                                    <Bell className="w-4 h-4 text-amber-500" title={`Rappel ${activity.reminderMinutes} minutes avant.`} />
+                                    <Bell className="w-4 h-4 text-amber-500" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
                                 )}
                             </div>
                             <div className="flex items-center gap-2">

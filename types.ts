@@ -16,7 +16,7 @@ export interface CompletedSlot {
   hour: number;
 }
 
-export type ViewType = 'main' | 'settings' | 'stats' | 'faq';
+export type ViewType = 'main' | 'settings' | 'stats' | 'faq' | 'privacy';
 
 export interface Verse {
   text: string;

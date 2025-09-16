@@ -46,8 +46,7 @@ Nous prenons des mesures pour protéger vos données :
 
 ## 6. Contact
 
-Pour toute question concernant vos données, contactez-nous à :
-[Votre adresse email de contact]
+Pour toute question concernant vos données ou pour nous contacter, rendez-vous dans la section Aide de l'application où vous trouverez un formulaire de contact.
 
 ## 7. Modifications
 
