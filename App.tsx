@@ -3,6 +3,7 @@ import { format, addDays, getDayOfYear, isBefore, getDay } from 'date-fns';
 import { fr } from "date-fns/locale/fr";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, HelpCircle, Lock } from "lucide-react";
+import { trackEvent, trackPageView, AnalyticsEvents } from "./utils/analytics";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Activity, CompletedSlot, ViewType } from "./types";
 import { defaultActivities } from "./constants";
@@ -25,6 +26,12 @@ import { BottomNavBar } from "./components/BottomNavBar";
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
+  
+  // Tracking des changements de vue
+  useEffect(() => {
+    trackPageView(currentView);
+    trackEvent(AnalyticsEvents.VIEW_CHANGE, { view: currentView });
+  }, [currentView]);
   const [activities, setActivities] = useLocalStorage<Activity[]>('activities', defaultActivities);
   const [completedSlots, setCompletedSlots] = useLocalStorage<CompletedSlot[]>('completedSlots', sampleCompletedSlots);
   const [dailyPlans, setDailyPlans] = useLocalStorage<{ [date: string]: Activity[] }>('dailyPlans', {});
@@ -184,8 +191,12 @@ export default function App() {
     if (typeof document !== 'undefined') {
         if ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
             setIsPipSupported(true);
+            trackEvent(AnalyticsEvents.PIP_TOGGLE, { supported: true });
         }
-        setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+        const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+        setIsStandalone(isStandaloneMode);
+        if (isStandaloneMode) {
+            trackEvent('app_standalone_mode');
     }
     
     const handleSWUpdate = () => {
@@ -319,8 +330,10 @@ export default function App() {
       setCompletedSlots(completedSlots.filter(slot =>
         !(slot.date === dateKey && slot.hour === hour)
       ));
+      trackEvent(AnalyticsEvents.SLOT_UNCOMPLETE, { hour, date: dateKey });
     } else {
       setCompletedSlots([...completedSlots, { date: dateKey, hour }]);
+      trackEvent(AnalyticsEvents.SLOT_COMPLETE, { hour, date: dateKey });
     }
   };
 
@@ -335,9 +348,11 @@ export default function App() {
     const { outcome } = await installPromptEvent.userChoice;
     if (outcome === 'accepted') {
       console.log('User accepted the install prompt');
+      trackEvent(AnalyticsEvents.PWA_INSTALL, { outcome: 'accepted' });
       setInstallPromptEvent(null);
     } else {
       console.log('User dismissed the install prompt');
+      trackEvent(AnalyticsEvents.PWA_INSTALL, { outcome: 'dismissed' });
     }
   };
 
