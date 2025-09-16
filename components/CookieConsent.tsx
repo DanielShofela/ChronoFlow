@@ -10,11 +10,21 @@ interface CookieConsentProps {
 
 export function CookieConsent({ onAccept, onDecline }: CookieConsentProps) {
   const handleAccept = () => {
+    // Mise à jour du consentement pour Analytics et AdSense
+    window.gtag('consent', 'update', {
+      'analytics_storage': 'granted',
+      'ad_storage': 'granted'
+    });
     trackEvent('cookie_consent', { action: 'accept' });
     onAccept();
   };
 
   const handleDecline = () => {
+    // Refus du consentement pour Analytics et AdSense
+    window.gtag('consent', 'update', {
+      'analytics_storage': 'denied',
+      'ad_storage': 'denied'
+    });
     trackEvent('cookie_consent', { action: 'decline' });
     onDecline();
   };
@@ -29,7 +39,7 @@ export function CookieConsent({ onAccept, onDecline }: CookieConsentProps) {
       <div className="container mx-auto max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-sm">
           <p>
-            Nous utilisons des cookies et des outils d'analyse pour améliorer votre expérience. 
+            Nous utilisons des cookies, des outils d'analyse et des publicités pour améliorer votre expérience et soutenir le développement de l'application. 
             En continuant à utiliser ChronoFlow, vous acceptez notre{' '}
             <button 
               onClick={() => {

@@ -8,6 +8,7 @@ import { cn, isColorLight } from '../utils';
 import { predefinedColors } from '../constants';
 import { ConfirmationDialog } from './ConfirmationDialog';
 import { useTheme } from '../hooks/useTheme';
+import { InterstitialAd } from './InterstitialAd';
 
 interface SettingsViewProps {
   activities: Activity[];
@@ -327,6 +328,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
   const [view, setView] = useState<'active' | 'archived'>('active');
   const [showForm, setShowForm] = useState(activities.length === 0);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | PermissionState>('default');
+  const [showAd, setShowAd] = useState(false);
 
   useEffect(() => {
     if ('permissions' in navigator) {
@@ -357,6 +359,11 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
     }
     setEditingActivity(null);
     setShowForm(false);
+    
+    // Montrer la publicité avec une probabilité de 50%
+    if (Math.random() < 0.5) {
+      setShowAd(true);
+    }
   };
   
   const handleArchive = (activity: Activity) => {
@@ -509,6 +516,12 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
         title="Supprimer l'activité"
         message={`Êtes-vous sûr de vouloir supprimer définitivement l'activité "${activityToDelete?.name}" ? Cette action est irréversible.`}
         confirmText="Supprimer"
+      />
+
+      <InterstitialAd
+        isOpen={showAd}
+        onClose={() => setShowAd(false)}
+        slot="settings-activity"
       />
     </motion.div>
   );

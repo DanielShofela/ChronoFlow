@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { ArrowLeft, Plus, Minus, Send, CheckCircle, AlertTriangle, Star } from 'lucide-react';
 import { cn } from '../utils';
+import { InterstitialAd } from './InterstitialAd';
 
 interface FaqViewProps {
   onBack: () => void;
@@ -81,6 +82,7 @@ export function FaqView({ onBack }: FaqViewProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [showAd, setShowAd] = useState(false);
   
   useEffect(() => {
     if (submitStatus === 'success' || submitStatus === 'error') {
@@ -95,7 +97,9 @@ export function FaqView({ onBack }: FaqViewProps) {
   
   const handleSubmitFeedback = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (rating === 0 || isSubmitting) return;
+    if (rating === 0 || isSubmitting) {
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
@@ -117,6 +121,7 @@ export function FaqView({ onBack }: FaqViewProps) {
         setSubmitStatus('success');
         setFeedback('');
         setRating(0);
+        setShowAd(true);
       } else {
         throw new Error('Form submission failed');
       }
@@ -296,6 +301,11 @@ export function FaqView({ onBack }: FaqViewProps) {
         </form>
       </motion.div>
 
+      <InterstitialAd
+        isOpen={showAd}
+        onClose={() => setShowAd(false)}
+        slot="faq-feedback"
+      />
     </motion.div>
   );
 }

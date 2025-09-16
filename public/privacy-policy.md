@@ -9,11 +9,19 @@ ChronoFlow s'engage à protéger votre vie privée. Cette politique de confident
 ## 2. Collecte de Données
 
 ### 2.1 Données Collectées Automatiquement
-Nous utilisons Google Analytics pour collecter des données sur :
+Nous utilisons Google Analytics et Google AdSense pour collecter des données sur :
 - Votre utilisation de l'application
 - Les pages visitées
 - Le temps passé sur l'application
 - Des informations techniques (type d'appareil, navigateur)
+- Les interactions avec les publicités
+
+### 2.2 Publicité
+Nous utilisons Google AdSense pour afficher des publicités pertinentes. AdSense peut :
+- Utiliser des cookies pour personnaliser les annonces
+- Collecter des informations sur vos centres d'intérêt
+- Adapter les publicités à votre profil
+- Partager certaines informations avec les annonceurs de manière anonyme
 
 ### 2.2 Cookies
 Nous utilisons des cookies pour :
