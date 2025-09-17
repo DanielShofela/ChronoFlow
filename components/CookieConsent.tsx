@@ -8,11 +8,11 @@ interface CookieConsentProps {
 
 export function CookieConsent({ onShowPrivacyPolicy }: CookieConsentProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [cookieConsent, setCookieConsent] = useLocalStorage<boolean>('cookieConsent', true);
+  const [cookieConsent, setCookieConsent] = useLocalStorage<boolean | null>('cookieConsent', null);
 
   useEffect(() => {
-    // La bannière ne s'affiche que si le consentement est explicitement refusé
-    if (cookieConsent === false) {
+    // La bannière s'affiche si le consentement n'a pas encore été donné
+    if (cookieConsent === null) {
       setIsVisible(true);
     }
   }, [cookieConsent]);

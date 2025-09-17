@@ -45,6 +45,32 @@ export default function App() {
   const [sentReminders, setSentReminders] = useState(new Set<string>());
   const [todayString, setTodayString] = useState(() => format(new Date(), 'yyyy-MM-dd'));
 
+  // Effect for PWA installation
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvent(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsStandalone(true);
+      setInstallPromptEvent(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsStandalone(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
   useEffect(() => {
     // Migration for activities that don't have the `days` or `isRecurring` property
     if (activities.length > 0 && activities.some(a => a.days === undefined || typeof a.isRecurring === 'undefined')) {
@@ -313,23 +339,6 @@ export default function App() {
   }, [activities, sentReminders, todayString]);
 
 
-  const handleSlotToggle = (hour: number) => {
-    if (isPastDate) return;
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const slotKey = `${dateKey}-${hour}`;
-
-    if (completedSlotsSet.has(slotKey)) {
-      setCompletedSlots(completedSlots.filter(slot =>
-        !(slot.date === dateKey && slot.hour === hour)
-      ));
-    } else {
-      setCompletedSlots([...completedSlots, { date: dateKey, hour }]);
-    }
-  };
-
-  const handlePreviousDay = () => setSelectedDate(addDays(selectedDate, -1));
-  const handleNextDay = () => setSelectedDate(addDays(selectedDate, 1));
-  
   const handleInstallClick = async () => {
     if (!installPromptEvent) {
       return;
@@ -343,6 +352,57 @@ export default function App() {
       console.log('User dismissed the install prompt');
     }
   };
+
+  const trackEvent = (eventName: string, eventParams: Record<string, any> = {}) => {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', eventName, {
+        ...eventParams,
+        timestamp: new Date().toISOString()
+      });
+    }
+  };
+
+  const handleSlotToggle = (hour: number) => {
+    if (isPastDate) return;
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const slotKey = `${dateKey}-${hour}`;
+
+    const isCompleting = !completedSlotsSet.has(slotKey);
+    if (isCompleting) {
+      setCompletedSlots([...completedSlots, { date: dateKey, hour }]);
+      // Tracking de complétion d'activité
+      const activity = activitiesForSelectedDate.find(a => 
+        a.slots.includes(hour)
+      );
+      if (activity) {
+        trackEvent('activity_completed', {
+          activity_name: activity.name,
+          activity_id: activity.id,
+          time_slot: hour,
+          date: dateKey
+        });
+      }
+    } else {
+      setCompletedSlots(completedSlots.filter(slot =>
+        !(slot.date === dateKey && slot.hour === hour)
+      ));
+      // Tracking d'annulation de complétion
+      const activity = activitiesForSelectedDate.find(a => 
+        a.slots.includes(hour)
+      );
+      if (activity) {
+        trackEvent('activity_uncompleted', {
+          activity_name: activity.name,
+          activity_id: activity.id,
+          time_slot: hour,
+          date: dateKey
+        });
+      }
+    }
+  };
+
+  const handlePreviousDay = () => setSelectedDate(addDays(selectedDate, -1));
+  const handleNextDay = () => setSelectedDate(addDays(selectedDate, 1));
 
   const todayStats = useMemo(() => {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');

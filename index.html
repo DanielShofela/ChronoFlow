@@ -7,16 +7,19 @@
       window.dataLayer = window.dataLayer || [];
       
       // Default consent configuration
+      const storedConsent = localStorage.getItem('cookieConsent');
+      const defaultConsentState = storedConsent === 'true' ? 'granted' : 'denied';
+      
       window.dataLayer.push({
         'event': 'default_consent',
         'consent_config': {
-          'ad_storage': 'granted',
-          'ad_user_data': 'granted',
-          'ad_personalization': 'granted',
-          'analytics_storage': 'granted',
-          'functionality_storage': 'granted',
-          'personalization_storage': 'granted',
-          'security_storage': 'granted',
+          'ad_storage': defaultConsentState,
+          'ad_user_data': defaultConsentState,
+          'ad_personalization': defaultConsentState,
+          'analytics_storage': defaultConsentState,
+          'functionality_storage': 'granted', // Toujours accordé car nécessaire au fonctionnement
+          'personalization_storage': defaultConsentState,
+          'security_storage': 'granted', // Toujours accordé car nécessaire à la sécurité
           'wait_for_update': 500
         }
       });
