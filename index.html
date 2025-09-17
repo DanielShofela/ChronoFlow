@@ -24,20 +24,42 @@
         }
       });
 
-      // GTM initialization with debug mode support
+      // GTM initialization with debug and preview mode support
       (function(w,d,s,l,i){
         w[l]=w[l]||[];
-        // Debug mode detection
-        const dbg = new URLSearchParams(w.location.search).has('_dbg');
+        // Debug & Preview mode detection
+        const urlParams = new URLSearchParams(w.location.search);
+        const dbg = urlParams.has('_dbg');
+        const gtm_auth = urlParams.get('gtm_auth');
+        const gtm_preview = urlParams.get('gtm_preview');
+
         if (dbg) {
           w[l].push({'event': 'debug_enabled'});
         }
+
         w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
         var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
         j.async=true;
-        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl+(dbg?'&gtm_debug=x':'');
+
+        // Construction de l'URL GTM avec support du mode debug et preview
+        var gtmUrl = 'https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        if (dbg) gtmUrl += '&gtm_debug=x';
+        if (gtm_auth && gtm_preview) {
+          gtmUrl += '&gtm_auth=' + gtm_auth + '&gtm_preview=' + gtm_preview + '&gtm_cookies_win=x';
+        }
+
+        j.src = gtmUrl;
         f.parentNode.insertBefore(j,f);
+
+        // Log pour faciliter le débogage
+        if (dbg || (gtm_auth && gtm_preview)) {
+          console.log('GTM Mode:', {
+            debug: dbg,
+            preview: !!gtm_preview,
+            url: gtmUrl
+          });
+        }
       })(window,document,'script','dataLayer','GTM-VGB5GGBJND');
     </script>
     <!-- End Google Tag Manager -->
@@ -93,6 +115,30 @@
     <meta name="theme-color" content="#24C6DC" />
     <link rel="apple-touch-icon" href="/icon-192x192.png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('Service Worker registered successfully:', registration);
+              
+              // Vérifier les mises à jour
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Nouvelle version disponible
+                    sessionStorage.setItem('swUpdate', 'true');
+                  }
+                });
+              });
+            })
+            .catch(error => {
+              console.log('Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
     <style>
       :root {
         --background: 0 0% 100%;

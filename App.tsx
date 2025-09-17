@@ -24,6 +24,16 @@ import { OnboardingGuide } from "./components/OnboardingGuide";
 import { BottomNavBar } from "./components/BottomNavBar";
 import { CookieConsent } from "./components/CookieConsent";
 
+// Fonction utilitaire pour le tracking GA4
+const trackEvent = (eventName: string, eventParams: Record<string, any> = {}) => {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, {
+      ...eventParams,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
@@ -45,6 +55,31 @@ export default function App() {
   const [sentReminders, setSentReminders] = useState(new Set<string>());
   const [todayString, setTodayString] = useState(() => format(new Date(), 'yyyy-MM-dd'));
 
+  // Effect for PWA installation
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvent(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsStandalone(true);
+      setInstallPromptEvent(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsStandalone(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     // Migration for activities that don't have the `days` or `isRecurring` property
@@ -192,17 +227,47 @@ export default function App() {
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
     }
     
-    const handleSWUpdate = () => {
-      // This is a custom event fired from the service worker registration
-      // See vite.config.ts and the PWA plugin documentation for more info
-      if (sessionStorage.getItem('swUpdate')) {
-        setShowUpdateToast(true);
-        sessionStorage.removeItem('swUpdate');
-        setTimeout(() => setShowUpdateToast(false), 5000);
+    // Vérifie les mises à jour du service worker
+    const checkForUpdates = async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          
+          // Force une vérification de mise à jour
+          await registration.update();
+
+          // Vérifie si une mise à jour est déjà en attente
+          if (registration.waiting) {
+            setShowUpdateToast(true);
+          }
+        } catch (error) {
+          console.error('Erreur lors de la vérification des mises à jour:', error);
+        }
       }
     };
-    handleSWUpdate(); // Check on initial load
-    window.addEventListener('load', handleSWUpdate);
+
+    // Écoute les messages du service worker
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+        setShowUpdateToast(true);
+        // Stocke la version pour référence
+        sessionStorage.setItem('pendingVersion', event.data.version);
+      }
+    };
+
+    // Vérifie les mises à jour toutes les 30 minutes
+    const updateCheckInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
+    
+    // Vérifie au chargement
+    checkForUpdates();
+
+    // Écoute les messages du service worker
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+
+    return () => {
+      clearInterval(updateCheckInterval);
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+    };
 
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -222,7 +287,6 @@ export default function App() {
     window.addEventListener('online', handleOnline);
 
     return () => {
-      window.removeEventListener('load', handleSWUpdate);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       window.removeEventListener('offline', handleOffline);
@@ -314,7 +378,6 @@ export default function App() {
   }, [activities, sentReminders, todayString]);
 
 
-
   const handleInstallClick = async () => {
     if (!installPromptEvent) {
       return;
@@ -377,8 +440,25 @@ export default function App() {
     }
   };
 
-  const handlePreviousDay = () => setSelectedDate(addDays(selectedDate, -1));
-  const handleNextDay = () => setSelectedDate(addDays(selectedDate, 1));
+  const handlePreviousDay = () => {
+    const newDate = addDays(selectedDate, -1);
+    setSelectedDate(newDate);
+    trackEvent('date_navigation', {
+      direction: 'previous',
+      new_date: format(newDate, 'yyyy-MM-dd'),
+      is_past_date: isBefore(newDate, startOfToday())
+    });
+  };
+
+  const handleNextDay = () => {
+    const newDate = addDays(selectedDate, 1);
+    setSelectedDate(newDate);
+    trackEvent('date_navigation', {
+      direction: 'next',
+      new_date: format(newDate, 'yyyy-MM-dd'),
+      is_past_date: isBefore(newDate, startOfToday())
+    });
+  };
 
   const todayStats = useMemo(() => {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
@@ -487,6 +567,20 @@ export default function App() {
                     <span>Mode lecture seule : les jours passés ne peuvent pas être modifiés.</span>
                   </motion.div>
                 )}
+                {/* AdSense Banner */}
+                <div className="w-full mb-4">
+                  <ins className="adsbygoogle"
+                    style={{ display: 'block' }}
+                    data-ad-client="ca-pub-4849274785502619"
+                    data-ad-slot="1234567890"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true">
+                  </ins>
+                  <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                  </script>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                   <motion.div
                     className="lg:col-span-3 flex flex-col items-center justify-center p-6 rounded-2xl border bg-card shadow-sm"
