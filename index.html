@@ -1,13 +1,27 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VGB5GGBJND"></script>
+    <!-- Google tag (gtag.js) with Consent Mode -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
 
+      // Set default consent to 'denied' as a placeholder
+      gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied'
+      });
+
+      // Function to update consent
+      function updateConsent(consent) {
+        gtag('consent', 'update', consent);
+      }
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VGB5GGBJND"></script>
+    <script>
+      gtag('js', new Date());
       gtag('config', 'G-VGB5GGBJND');
     </script>
     <meta charset="UTF-8" />

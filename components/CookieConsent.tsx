@@ -16,13 +16,29 @@ export function CookieConsent() {
   const handleAccept = () => {
     setCookieConsent(true);
     setIsVisible(false);
-    // Fermer la bannière de consentement
-    setIsVisible(false);
+    // Update Google consent
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).updateConsent({
+        'ad_storage': 'granted',
+        'ad_user_data': 'granted',
+        'ad_personalization': 'granted',
+        'analytics_storage': 'granted'
+      });
+    }
   };
 
   const handleDecline = () => {
     setCookieConsent(false);
     setIsVisible(false);
+    // Keep consent denied
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).updateConsent({
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied'
+      });
+    }
   };
 
   return (
