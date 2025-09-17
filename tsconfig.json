@@ -11,9 +11,11 @@
     ],
     "skipLibCheck": true,
     "types": [
-      
+      "node"
     ],
     "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "allowJs": true,
