@@ -21,6 +21,7 @@ import { ConnectionStatusToast } from "./components/ConnectionStatusToast";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { BottomNavBar } from "./components/BottomNavBar";
+import GoogleAd from "./components/GoogleAd";
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -370,20 +371,20 @@ export default function App() {
       {showOnboarding && <OnboardingGuide onClose={handleOnboardingClose} />}
       <div className="container mx-auto p-4 max-w-7xl pb-24 md:pb-4">
         <motion.header
-          className="flex flex-col sm:flex-row items-center justify-between mb-8 p-4 rounded-2xl bg-card border shadow-sm"
+          className="flex flex-col sm:flex-row items-center justify-between mb-6 p-2 rounded-2xl bg-card border shadow-sm"
           {...{
             initial: { opacity: 0, y: -20 },
             animate: { opacity: 1, y: 0 },
           }}
         >
-          <div className="flex items-center gap-4 mb-4 sm:mb-0">
+          <div className="flex items-center gap-2 mb-2 sm:mb-0">
             <h1 className="text-2xl font-bold">
               <button
                 onClick={() => setCurrentView('main')}
-                className="transition-colors hover:text-primary focus:outline-none"
+                className="transition-colors hover:text-primary focus:outline-none flex items-center"
                 aria-label="Retour à l'accueil"
               >
-                ChronoFlow
+                <img src="/icon_header.png" alt="ChronoFlow" className="h-16 w-auto" />
               </button>
             </h1>
           </div>
@@ -544,6 +545,9 @@ export default function App() {
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
+      <div className="w-full max-w-7xl mx-auto px-4 mb-4">
+        <GoogleAd />
+      </div>
       <BottomNavBar currentView={currentView} onNavigate={setCurrentView} />
     </div>
   );
