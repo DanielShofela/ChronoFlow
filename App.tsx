@@ -341,6 +341,11 @@ export default function App() {
 
   const handleInstallClick = async () => {
     if (!installPromptEvent) {
+      // Afficher des instructions pour l'installation manuelle
+      alert('Pour installer l\'application manuellement:\n\n' +
+            '1. Sur Chrome/Edge: Cliquez sur les trois points en haut à droite, puis "Installer l\'application"\n' +
+            '2. Sur Safari iOS: Appuyez sur le bouton de partage, puis "Sur l\'écran d\'accueil"\n' +
+            '3. Sur Firefox Android: Menu > Installer');
       return;
     }
     installPromptEvent.prompt();
@@ -603,7 +608,7 @@ export default function App() {
         {showUpdateToast && <UpdateToast onClose={() => setShowUpdateToast(false)} />}
       </AnimatePresence>
       <AnimatePresence>
-        {!isStandalone && installPromptEvent && (
+        {!isStandalone && (
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
