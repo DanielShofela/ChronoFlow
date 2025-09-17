@@ -2,13 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Trash2, Archive, ArchiveRestore, X, Bell, BookOpen, Palette, ChevronDown } from 'lucide-react';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
-import { trackEvent, AnalyticsEvents } from '../utils/analytics';
 import type { Activity } from '../types';
 import { cn, isColorLight } from '../utils';
 import { predefinedColors } from '../constants';
 import { ConfirmationDialog } from './ConfirmationDialog';
 import { useTheme } from '../hooks/useTheme';
-import { InterstitialAd } from './InterstitialAd';
 
 interface SettingsViewProps {
   activities: Activity[];
@@ -112,25 +110,12 @@ function ActivityForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      return;
-    }
+    if (!formData.name.trim()) return;
 
     const activityToSave: Activity = {
       ...formData,
       id: activity ? activity.id : `user-${Date.now()}`,
     };
-    
-    // Track l'événement avec GA
-    trackEvent(
-      activity ? AnalyticsEvents.ACTIVITY_UPDATE : AnalyticsEvents.ACTIVITY_CREATE,
-      {
-        activityName: formData.name,
-        isRecurring: formData.isRecurring,
-        hasReminder: !!formData.reminderMinutes
-      }
-    );
-    
     onSave(activityToSave);
   };
   
@@ -328,7 +313,6 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
   const [view, setView] = useState<'active' | 'archived'>('active');
   const [showForm, setShowForm] = useState(activities.length === 0);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | PermissionState>('default');
-  const [showAd, setShowAd] = useState(false);
 
   useEffect(() => {
     if ('permissions' in navigator) {
@@ -359,37 +343,18 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
     }
     setEditingActivity(null);
     setShowForm(false);
-    
-    // Montrer la publicité avec une probabilité de 50%
-    if (Math.random() < 0.5) {
-      setShowAd(true);
-    }
   };
   
   const handleArchive = (activity: Activity) => {
     onActivitiesChange(activities.map(a => a.id === activity.id ? {...a, isArchived: true} : a));
-    trackEvent(AnalyticsEvents.ACTIVITY_ARCHIVE, { 
-      activityName: activity.name,
-      action: 'archive'
-    });
   };
   
   const handleUnarchive = (activity: Activity) => {
     onActivitiesChange(activities.map(a => a.id === activity.id ? {...a, isArchived: false} : a));
-    trackEvent(AnalyticsEvents.ACTIVITY_ARCHIVE, { 
-      activityName: activity.name,
-      action: 'unarchive'
-    });
   };
   
   const handleDelete = () => {
-    if (!activityToDelete) {
-      return;
-    }
-    trackEvent(AnalyticsEvents.ACTIVITY_UPDATE, { 
-      activityName: activityToDelete.name,
-      action: 'delete'
-    });
+    if (!activityToDelete) return;
     onActivitiesChange(activities.filter(a => a.id !== activityToDelete.id));
     setActivityToDelete(null);
   };
@@ -424,7 +389,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">Gérer les activités</h3>
               {notificationPermission === 'granted' && (
-                <Bell className="w-4 h-4 text-green-500" aria-label="Les notifications sont activées" />
+                <Bell className="w-4 h-4 text-green-500" title="Les notifications sont activées" />
               )}
             </div>
             <motion.button 
@@ -457,7 +422,7 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
                                 <span className="text-2xl">{activity.icon}</span>
                                 <span className="font-medium">{activity.name}</span>
                                 {activity.reminderMinutes && activity.reminderMinutes > 0 && (
-                                    <Bell className="w-4 h-4 text-amber-500" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
+                                    <Bell className="w-4 h-4 text-amber-500" title={`Rappel ${activity.reminderMinutes} minutes avant.`} />
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
@@ -516,12 +481,6 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
         title="Supprimer l'activité"
         message={`Êtes-vous sûr de vouloir supprimer définitivement l'activité "${activityToDelete?.name}" ? Cette action est irréversible.`}
         confirmText="Supprimer"
-      />
-
-      <InterstitialAd
-        isOpen={showAd}
-        onClose={() => setShowAd(false)}
-        slot="settings-activity"
       />
     </motion.div>
   );

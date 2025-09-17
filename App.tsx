@@ -3,7 +3,6 @@ import { format, addDays, getDayOfYear, isBefore, getDay } from 'date-fns';
 import { fr } from "date-fns/locale/fr";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, HelpCircle, Lock } from "lucide-react";
-import { trackEvent, trackPageView, AnalyticsEvents } from "./utils/analytics";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import type { Activity, CompletedSlot, ViewType } from "./types";
 import { defaultActivities } from "./constants";
@@ -22,28 +21,10 @@ import { ConnectionStatusToast } from "./components/ConnectionStatusToast";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { BottomNavBar } from "./components/BottomNavBar";
-import { CookieConsent } from "./components/CookieConsent";
-import { PrivacyPolicy } from "./components/PrivacyPolicy";
 
 export default function App() {
-  const [cookiesAccepted, setCookiesAccepted] = useLocalStorage<boolean>('cookies-accepted', false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
-  
-  // Tracking des changements de vue
-  useEffect(() => {
-    trackPageView(currentView);
-    trackEvent(AnalyticsEvents.VIEW_CHANGE, { view: currentView });
-  }, [currentView]);
-
-  // Écouteur d'événement pour la navigation
-  useEffect(() => {
-    const handleNavigation = (e: CustomEvent<{ view: ViewType }>) => {
-      setCurrentView(e.detail.view);
-    };
-    window.addEventListener('navigate', handleNavigation as EventListener);
-    return () => window.removeEventListener('navigate', handleNavigation as EventListener);
-  }, []);
   const [activities, setActivities] = useLocalStorage<Activity[]>('activities', defaultActivities);
   const [completedSlots, setCompletedSlots] = useLocalStorage<CompletedSlot[]>('completedSlots', sampleCompletedSlots);
   const [dailyPlans, setDailyPlans] = useLocalStorage<{ [date: string]: Activity[] }>('dailyPlans', {});
@@ -92,9 +73,7 @@ export default function App() {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
     const sortActivities = (activitiesToSort: Activity[]): Activity[] => {
-      if (!activitiesToSort) {
-        return [];
-      }
+      if (!activitiesToSort) return [];
       return [...activitiesToSort].sort((a, b) => {
         // An activity is completed if all its slots for the day are completed.
         const isACompleted = a.slots.length > 0 && a.slots.every(slot => completedSlotsSet.has(`${dateKey}-${slot}`));
@@ -112,9 +91,7 @@ export default function App() {
 
     const dayOfWeek = getDay(selectedDate);
     const filteredActivities = activities.filter(a => {
-        if (a.isArchived) {
-          return false;
-        }
+        if (a.isArchived) return false;
         const isRecurring = a.isRecurring ?? true; 
         
         if (isRecurring) {
@@ -137,9 +114,7 @@ export default function App() {
     if (isPastDate && dailyPlans[dateKey] === undefined) {
         const dayOfWeek = getDay(selectedDate);
         const planToSave = activities.filter(a => {
-            if (a.isArchived) {
-              return false;
-            }
+            if (a.isArchived) return false;
             const isRecurring = a.isRecurring ?? true;
             if (isRecurring) {
                 return a.days?.includes(dayOfWeek);
@@ -158,9 +133,7 @@ export default function App() {
     // Helper to check if an activity was fully completed on a given date
     const isActivityCompletedOnDate = (activity: Activity, date: Date, slotsSet: Set<string>): boolean => {
       const dateKey = format(date, 'yyyy-MM-dd');
-      if (activity.slots.length === 0) {
-        return false;
-      }
+      if (activity.slots.length === 0) return false;
       return activity.slots.every(slot => slotsSet.has(`${dateKey}-${slot}`));
     };
 
@@ -211,13 +184,8 @@ export default function App() {
     if (typeof document !== 'undefined') {
         if ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
             setIsPipSupported(true);
-            trackEvent(AnalyticsEvents.PIP_TOGGLE, { supported: true });
         }
-        const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-        setIsStandalone(isStandaloneMode);
-        if (isStandaloneMode) {
-            trackEvent('app_standalone_mode');
-        }
+        setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
     }
     
     const handleSWUpdate = () => {
@@ -298,9 +266,7 @@ export default function App() {
       const dateKey = format(now, 'yyyy-MM-dd');
 
       const activitiesWithReminders = activities.filter(a => {
-        if (a.isArchived || !a.reminderMinutes || a.reminderMinutes <= 0) {
-          return false;
-        }
+        if (a.isArchived || !a.reminderMinutes || a.reminderMinutes <= 0) return false;
         
         const isRecurring = a.isRecurring ?? true;
         if (isRecurring) {
@@ -345,9 +311,7 @@ export default function App() {
 
 
   const handleSlotToggle = (hour: number) => {
-    if (isPastDate) {
-      return;
-    }
+    if (isPastDate) return;
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     const slotKey = `${dateKey}-${hour}`;
 
@@ -355,10 +319,8 @@ export default function App() {
       setCompletedSlots(completedSlots.filter(slot =>
         !(slot.date === dateKey && slot.hour === hour)
       ));
-      trackEvent(AnalyticsEvents.SLOT_UNCOMPLETE, { hour, date: dateKey });
     } else {
       setCompletedSlots([...completedSlots, { date: dateKey, hour }]);
-      trackEvent(AnalyticsEvents.SLOT_COMPLETE, { hour, date: dateKey });
     }
   };
 
@@ -373,11 +335,9 @@ export default function App() {
     const { outcome } = await installPromptEvent.userChoice;
     if (outcome === 'accepted') {
       console.log('User accepted the install prompt');
-      trackEvent(AnalyticsEvents.PWA_INSTALL, { outcome: 'accepted' });
       setInstallPromptEvent(null);
     } else {
       console.log('User dismissed the install prompt');
-      trackEvent(AnalyticsEvents.PWA_INSTALL, { outcome: 'dismissed' });
     }
   };
 
@@ -405,32 +365,9 @@ export default function App() {
   };
 
 
-  // Gestion du consentement aux cookies
-  const handleCookiesAccept = () => {
-    setCookiesAccepted(true);
-    // Réactive GA
-    window.gtag('consent', 'update', {
-      'analytics_storage': 'granted'
-    });
-  };
-
-  const handleCookiesDecline = () => {
-    setCookiesAccepted(false);
-    // Désactive GA
-    window.gtag('consent', 'update', {
-      'analytics_storage': 'denied'
-    });
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
       {showOnboarding && <OnboardingGuide onClose={handleOnboardingClose} />}
-      {!cookiesAccepted && (
-        <CookieConsent
-          onAccept={handleCookiesAccept}
-          onDecline={handleCookiesDecline}
-        />
-      )}
       <div className="container mx-auto p-4 max-w-7xl pb-24 md:pb-4">
         <motion.header
           className="flex flex-col sm:flex-row items-center justify-between mb-8 p-4 rounded-2xl bg-card border shadow-sm"
@@ -440,7 +377,6 @@ export default function App() {
           }}
         >
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
-            <img src="/icon-192x192.png" alt="ChronoFlow icon" className="w-8 h-8 mr-2 rounded-md" />
             <h1 className="text-2xl font-bold">
               <button
                 onClick={() => setCurrentView('main')}
@@ -583,12 +519,6 @@ export default function App() {
             
             {currentView === 'faq' && (
               <FaqView
-                onBack={() => setCurrentView('main')}
-              />
-            )}
-
-            {currentView === 'privacy' && (
-              <PrivacyPolicy
                 onBack={() => setCurrentView('main')}
               />
             )}
