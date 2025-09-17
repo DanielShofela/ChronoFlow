@@ -22,7 +22,6 @@ import { InstallPrompt } from "./components/InstallPrompt";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { BottomNavBar } from "./components/BottomNavBar";
 import { CookieConsent } from "./components/CookieConsent";
-import { NativeAdBanner } from "./components/NativeAdBanner";
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -546,7 +545,6 @@ export default function App() {
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
-      <NativeAdBanner />
       <BottomNavBar currentView={currentView} onNavigate={setCurrentView} />
       <CookieConsent />
     </div>
