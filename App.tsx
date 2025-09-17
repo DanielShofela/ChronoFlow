@@ -45,43 +45,6 @@ export default function App() {
   const [sentReminders, setSentReminders] = useState(new Set<string>());
   const [todayString, setTodayString] = useState(() => format(new Date(), 'yyyy-MM-dd'));
 
-  // Effect for PWA installation
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      console.log('beforeinstallprompt event triggered', e);
-      e.preventDefault();
-      setInstallPromptEvent(e);
-    };
-
-    const handleAppInstalled = () => {
-      console.log('App installed successfully');
-      setIsStandalone(true);
-      setInstallPromptEvent(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    // Check if app is already installed
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-    console.log('Is standalone mode:', isStandaloneMode);
-    if (isStandaloneMode) {
-      setIsStandalone(true);
-    }
-
-    // Debug PWA installation criteria
-    console.log('PWA Debug Info:', {
-      isSecureContext: window.isSecureContext,
-      hasServiceWorker: 'serviceWorker' in navigator,
-      isStandalone: isStandaloneMode,
-      userAgent: navigator.userAgent
-    });
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
 
   useEffect(() => {
     // Migration for activities that don't have the `days` or `isRecurring` property
@@ -349,6 +312,7 @@ export default function App() {
 
     return () => clearInterval(intervalId);
   }, [activities, sentReminders, todayString]);
+
 
 
   const handleInstallClick = async () => {
@@ -619,25 +583,6 @@ export default function App() {
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
-      
-      {/* Debug button for PWA installation - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-6 left-6 z-[100]">
-          <button
-            onClick={() => {
-              console.log('Debug PWA State:', {
-                isStandalone,
-                installPromptEvent: !!installPromptEvent,
-                isSecureContext: window.isSecureContext,
-                hasServiceWorker: 'serviceWorker' in navigator
-              });
-            }}
-            className="px-4 py-2 bg-red-500 text-white rounded text-xs"
-          >
-            Debug PWA
-          </button>
-        </div>
-      )}
       <BottomNavBar currentView={currentView} onNavigate={setCurrentView} />
       <CookieConsent onShowPrivacyPolicy={() => setShowPrivacyPolicy(true)} />
       <AnimatePresence>
