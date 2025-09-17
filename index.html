@@ -1,31 +1,41 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
   <head>
-    <!-- Content Security Policy for Google Tags -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https: wss: blob:;">
-    
     <!-- Google Tag Manager -->
     <script>
-    // Initialize dataLayer
-    window.dataLayer = window.dataLayer || [];
-    
-    // Debug mode detection
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('_dbg')) {
-      console.log('Debug Mode Enabled');
+      // Initialize dataLayer
+      window.dataLayer = window.dataLayer || [];
+      
+      // Default consent configuration
       window.dataLayer.push({
-        'debug_mode': true,
-        'event': 'debug_enabled'
+        'event': 'default_consent',
+        'consent_config': {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'granted',
+          'analytics_storage': 'granted',
+          'functionality_storage': 'granted',
+          'personalization_storage': 'granted',
+          'security_storage': 'granted',
+          'wait_for_update': 500
+        }
       });
-    }
 
-    // GTM initialization
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl+ (urlParams.has('_dbg') ? '&gtm_debug=1' : '');
-    f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-VGB5GGBJND');
+      // GTM initialization with debug mode support
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        // Debug mode detection
+        const dbg = new URLSearchParams(w.location.search).has('_dbg');
+        if (dbg) {
+          w[l].push({'event': 'debug_enabled'});
+        }
+        w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl+(dbg?'&gtm_debug=x':'');
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-VGB5GGBJND');
     </script>
     <!-- End Google Tag Manager -->
 
@@ -57,18 +67,21 @@
     </script>
 
     <!-- Google Analytics 4 Configuration -->
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VGB5GGBJND"></script>
     <script>
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-VGB5GGBJND', {
-        'debug_mode': urlParams.has('_dbg'),
+        'debug_mode': new URLSearchParams(window.location.search).has('_dbg'),
         'send_page_view': true,
         'cookie_flags': 'max-age=7200;secure;samesite=none'
       });
+    </script>
+    <!-- End Google Analytics -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="google-adsense-account" content="ca-pub-4849274785502619">
+    <meta name="google-adsense-account" content="ca-pub-4849274785502619" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4849274785502619"
      crossorigin="anonymous"></script>
     <title>ChronoFlow</title>
