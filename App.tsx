@@ -4,6 +4,7 @@ import { fr } from "date-fns/locale/fr";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, HelpCircle, Lock } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import type { Activity, CompletedSlot, ViewType } from "./types";
 import { defaultActivities } from "./constants";
 import { verses } from "./data/verses";
@@ -38,6 +39,7 @@ export default function App() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [connectionStatusToast, setConnectionStatusToast] = useState<'online' | 'offline' | null>(null);
   const [showOnboarding, setShowOnboarding] = useLocalStorage('showOnboarding', true);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
   // State for reminders
   const [sentReminders, setSentReminders] = useState(new Set<string>());
@@ -545,8 +547,17 @@ export default function App() {
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
+      <button
+        onClick={() => setShowPrivacyPolicy(true)}
+        className="fixed bottom-16 right-4 text-sm text-foreground/60 hover:text-foreground/80 transition-colors"
+      >
+        Politique de confidentialité
+      </button>
       <BottomNavBar currentView={currentView} onNavigate={setCurrentView} />
       <CookieConsent />
+      <AnimatePresence>
+        {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
