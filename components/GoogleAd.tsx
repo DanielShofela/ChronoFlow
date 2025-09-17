@@ -1,11 +1,4 @@
-import React, { useEffect, useRef } from 'react';
-
-interface AdProps {
-  format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle';
-  slot?: string;
-  style?: React.CSSProperties;
-  className?: string;
-}
+import { useEffect } from 'react';
 
 declare global {
   interface Window {
@@ -13,34 +6,25 @@ declare global {
   }
 }
 
-export function GoogleAd({ format = 'auto', slot, style, className }: AdProps) {
-  const adRef = useRef<HTMLDivElement>(null);
-
+export default function GoogleAd() {
   useEffect(() => {
     try {
-      if (typeof window !== 'undefined') {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      }
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
-      console.error('Error loading AdSense ad:', err);
+      console.error('Error loading Google AdSense:', err);
     }
   }, []);
 
-  if (!slot) {
-    console.warn('AdSense slot ID is required');
-    return null;
-  }
-
   return (
-    <div ref={adRef} className={className}>
+    <>
       <ins
         className="adsbygoogle"
-        style={style || { display: 'block' }}
+        style={{ display: 'block' }}
         data-ad-client="ca-pub-4849274785502619"
-        data-ad-slot={slot}
-        data-ad-format={format}
+        data-ad-slot="5404383535"
+        data-ad-format="auto"
         data-full-width-responsive="true"
       />
-    </div>
+    </>
   );
 }
