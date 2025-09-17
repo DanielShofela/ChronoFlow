@@ -17,7 +17,7 @@ const navItems = [
 
 export function BottomNavBar({ currentView, onNavigate }: BottomNavBarProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-20 bg-card/80 backdrop-blur-lg border-t z-40 md:hidden">
+    <nav className="sticky bottom-0 left-0 right-0 h-14 bg-card border-t z-40 md:hidden">
       <div className="max-w-7xl mx-auto h-full flex">
         {navItems.map((item) => (
           <button

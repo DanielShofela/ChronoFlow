@@ -21,7 +21,8 @@ import { ConnectionStatusToast } from "./components/ConnectionStatusToast";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { OnboardingGuide } from "./components/OnboardingGuide";
 import { BottomNavBar } from "./components/BottomNavBar";
-import GoogleAd from "./components/GoogleAd";
+import { CookieConsent } from "./components/CookieConsent";
+import { NativeAdBanner } from "./components/NativeAdBanner";
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -369,7 +370,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
       {showOnboarding && <OnboardingGuide onClose={handleOnboardingClose} />}
-      <div className="container mx-auto p-4 max-w-7xl pb-24 md:pb-4">
+            <div className="container mx-auto px-4 pt-2 pb-0 max-w-7xl flex flex-col flex-grow">
         <motion.header
           className="flex flex-col sm:flex-row items-center justify-between mb-6 p-2 rounded-2xl bg-card border shadow-sm"
           {...{
@@ -545,10 +546,9 @@ export default function App() {
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
-      <div className="w-full max-w-7xl mx-auto px-4 mb-4">
-        <GoogleAd />
-      </div>
+      <NativeAdBanner />
       <BottomNavBar currentView={currentView} onNavigate={setCurrentView} />
+      <CookieConsent />
     </div>
   );
 }
