@@ -4,11 +4,11 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
-  const [cookieConsent, setCookieConsent] = useLocalStorage<boolean>('cookieConsent', false);
+  const [cookieConsent, setCookieConsent] = useLocalStorage<boolean>('cookieConsent', true);
 
   useEffect(() => {
-    // Afficher la bannière si le consentement n'a pas été donné
-    if (!cookieConsent) {
+    // La bannière ne s'affiche que si le consentement est explicitement refusé
+    if (cookieConsent === false) {
       setIsVisible(true);
     }
   }, [cookieConsent]);
