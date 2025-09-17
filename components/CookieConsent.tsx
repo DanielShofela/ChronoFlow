@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
-export function CookieConsent() {
+interface CookieConsentProps {
+  onShowPrivacyPolicy: () => void;
+}
+
+export function CookieConsent({ onShowPrivacyPolicy }: CookieConsentProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [cookieConsent, setCookieConsent] = useLocalStorage<boolean>('cookieConsent', true);
 
@@ -54,7 +58,13 @@ export function CookieConsent() {
             <div className="text-sm text-foreground">
               <p>
                 Nous utilisons des cookies pour améliorer votre expérience.
-                En continuant à utiliser notre application, vous acceptez notre utilisation des cookies.
+                En continuant à utiliser notre application, vous acceptez notre utilisation des cookies.{' '}
+                <button
+                  onClick={onShowPrivacyPolicy}
+                  className="text-primary hover:underline focus:outline-none"
+                >
+                  Politique de confidentialité
+                </button>
               </p>
             </div>
             <div className="flex gap-4">

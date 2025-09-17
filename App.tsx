@@ -547,14 +547,8 @@ export default function App() {
           <InstallPrompt onInstall={handleInstallClick} />
         )}
       </AnimatePresence>
-      <button
-        onClick={() => setShowPrivacyPolicy(true)}
-        className="fixed bottom-16 right-4 text-sm text-foreground/60 hover:text-foreground/80 transition-colors"
-      >
-        Politique de confidentialité
-      </button>
       <BottomNavBar currentView={currentView} onNavigate={setCurrentView} />
-      <CookieConsent />
+      <CookieConsent onShowPrivacyPolicy={() => setShowPrivacyPolicy(true)} />
       <AnimatePresence>
         {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
       </AnimatePresence>
