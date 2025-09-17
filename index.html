@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
   <head>
+    <!-- For Debug Mode -->
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('_dbg')) {
+        console.log('Debug Mode Enabled');
+        window.gtag_debug = { enable: true };
+      }
+    </script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-VGB5GGBJND');</script>
+    <!-- End Google Tag Manager -->
+
     <!-- Google tag (gtag.js) with Consent Mode -->
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -11,7 +27,10 @@
         'ad_storage': 'granted',
         'ad_user_data': 'granted',
         'ad_personalization': 'granted',
-        'analytics_storage': 'granted'
+        'analytics_storage': 'granted',
+        'functionality_storage': 'granted',
+        'personalization_storage': 'granted',
+        'security_storage': 'granted'
       });
 
       // Function to update consent
@@ -22,7 +41,9 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VGB5GGBJND"></script>
     <script>
       gtag('js', new Date());
-      gtag('config', 'G-VGB5GGBJND');
+      gtag('config', 'G-VGB5GGBJND', {
+        'debug_mode': true
+      });
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -166,6 +187,10 @@
 <link rel="stylesheet" href="/index.css">
 </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-VGB5GGBJND"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
