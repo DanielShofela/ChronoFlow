@@ -1,50 +1,71 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
   <head>
-    <!-- For Debug Mode -->
-    <script>
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('_dbg')) {
-        console.log('Debug Mode Enabled');
-        window.gtag_debug = { enable: true };
-      }
-    </script>
+    <!-- Content Security Policy for Google Tags -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https: wss: blob:;">
+    
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    <script>
+    // Initialize dataLayer
+    window.dataLayer = window.dataLayer || [];
+    
+    // Debug mode detection
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('_dbg')) {
+      console.log('Debug Mode Enabled');
+      window.dataLayer.push({
+        'debug_mode': true,
+        'event': 'debug_enabled'
+      });
+    }
+
+    // GTM initialization
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-VGB5GGBJND');</script>
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl+ (urlParams.has('_dbg') ? '&gtm_debug=1' : '');
+    f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-VGB5GGBJND');
+    </script>
     <!-- End Google Tag Manager -->
 
-    <!-- Google tag (gtag.js) with Consent Mode -->
+    <!-- Initialize Consent Mode -->
+        <!-- Initialize Consent Mode -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-
-      // Set default consent to 'granted'
-      gtag('consent', 'default', {
-        'ad_storage': 'granted',
-        'ad_user_data': 'granted',
-        'ad_personalization': 'granted',
-        'analytics_storage': 'granted',
-        'functionality_storage': 'granted',
-        'personalization_storage': 'granted',
-        'security_storage': 'granted'
+      // Initialize consent settings
+      window.dataLayer.push({
+        'event': 'default_consent',
+        'consent_config': {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'granted',
+          'analytics_storage': 'granted',
+          'functionality_storage': 'granted',
+          'personalization_storage': 'granted',
+          'security_storage': 'granted',
+          'wait_for_update': 500
+        }
       });
 
       // Function to update consent
       function updateConsent(consent) {
-        gtag('consent', 'update', consent);
+        window.dataLayer.push({
+          'event': 'update_consent',
+          'consent_update': consent
+        });
       }
     </script>
+
+    <!-- Google Analytics 4 Configuration -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VGB5GGBJND"></script>
     <script>
+      function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-VGB5GGBJND', {
-        'debug_mode': true
+        'debug_mode': urlParams.has('_dbg'),
+        'send_page_view': true,
+        'cookie_flags': 'max-age=7200;secure;samesite=none'
       });
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-adsense-account" content="ca-pub-4849274785502619">
