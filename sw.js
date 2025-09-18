@@ -1,5 +1,5 @@
-// Version de cache - À incrémenter à chaque déploiement majeur
-const CACHE_VERSION = 'v4';
+// Version de cache - Utilisation d'un timestamp pour forcer la mise à jour
+const CACHE_VERSION = 'v4.' + Date.now();
 const CACHE_NAME = `chronoflow-${CACHE_VERSION}`;
 
 // Liste des ressources à mettre en cache
@@ -31,21 +31,19 @@ self.addEventListener('install', (event) => {
   }
   
   event.waitUntil(
-    Promise.all([
+    caches.open(CACHE_NAME).then(async (cache) => {
       // Installation des caches
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.addAll(CACHED_ASSETS);
-      }),
+      await cache.addAll(CACHED_ASSETS);
+      
       // Notifier d'une mise à jour disponible
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'UPDATE_AVAILABLE',
-            version: CACHE_VERSION
-          });
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'UPDATE_AVAILABLE',
+          version: CACHE_VERSION
         });
-      })
-    ])
+      });
+    })
   );
 });
 
