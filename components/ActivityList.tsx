@@ -75,16 +75,15 @@ export function ActivityList({
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                       <button
-                        className={cn(
-                          "flex items-center gap-2 text-primary underline font-semibold hover:text-primary/80 transition-colors",
-                          completed && 'line-through text-muted-foreground',
-                        )}
+                        className="flex items-center gap-2 text-primary underline font-semibold hover:text-primary/80 transition-colors"
                         onClick={() => onGoToSettings(activity)}
                         aria-label={`Modifier l'activité ${activity.name}`}
                         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                       >
                         <span className="text-2xl">{activity.icon}</span>
-                        {activity.name}
+                        <span className={cn(
+                          completed && 'line-through text-muted-foreground'
+                        )}>{activity.name}</span>
                       </button>
                       {activity.reminderMinutes && activity.reminderMinutes > 0 && (
                         <Bell className="w-4 h-4 text-primary" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
