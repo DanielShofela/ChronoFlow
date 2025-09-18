@@ -72,18 +72,49 @@ function ActivityForm({
   const [showColorInput, setShowColorInput] = useState(false);
   const [customColorInput, setCustomColorInput] = useState('');
   const [colorToDelete, setColorToDelete] = useState<string | null>(null);
+  const [startHour, setStartHour] = useState<number | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [shouldSelect, setShouldSelect] = useState(true);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
+  // Fonction pour vibrer lors de la sélection
+  const vibrate = useCallback(() => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+  }, []);
+
   // Fonction pour basculer l'état d'un créneau
-  const toggleSlot = (hour: number) => {
+  // Fonction pour mettre à jour une plage de créneaux
+  const updateSlotRange = useCallback((fromHour: number, toHour: number, select: boolean) => {
+    const start = Math.min(fromHour, toHour);
+    const end = Math.max(fromHour, toHour);
+    
+    setFormData(prev => {
+      const slots = new Set(prev.slots);
+      for (let hour = start; hour <= end; hour++) {
+        if (select) {
+          slots.add(hour);
+        } else {
+          slots.delete(hour);
+        }
+      }
+      return {
+        ...prev,
+        slots: Array.from(slots).sort((a, b) => a - b),
+      };
+    });
+  }, []);
+
+  const toggleSlot = useCallback((hour: number) => {
     setFormData(prev => ({
       ...prev,
       slots: prev.slots.includes(hour)
         ? prev.slots.filter(s => s !== hour)
         : [...prev.slots, hour].sort((a, b) => a - b),
     }));
-  };
+  }, []);
 
 
 
@@ -364,11 +395,44 @@ function ActivityForm({
                 <button
                   key={hour}
                   type="button"
-                  onClick={() => toggleSlot(hour)}
+                  data-hour={hour}
+                  onClick={!('ontouchstart' in window) ? () => toggleSlot(hour) : undefined}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    setStartHour(hour);
+                    setIsSelecting(true);
+                    setShouldSelect(!formData.slots.includes(hour));
+                    toggleSlot(hour);
+                    vibrate();
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isSelecting || startHour === null) return;
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const hourElement = element?.closest('button[data-hour]');
+                    if (hourElement) {
+                      const touchedHour = parseInt(hourElement.getAttribute('data-hour') || '', 10);
+                      if (!isNaN(touchedHour)) {
+                        updateSlotRange(startHour, touchedHour, shouldSelect);
+                      }
+                    }
+                  }}
+                  onTouchEnd={() => {
+                    setIsSelecting(false);
+                    setStartHour(null);
+                  }}
+                  onTouchCancel={() => {
+                    setIsSelecting(false);
+                    setStartHour(null);
+                  }}
                   className={cn(
                     "h-10 text-sm font-bold rounded-lg transition-colors select-none touch-none",
                     formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
                   )}
+                  style={{
+                    ...(isSelecting && startHour !== null) ? { filter: 'brightness(1.2)' } : {}
+                  }}
                 >{hour}</button>
               ))}
             </div>
