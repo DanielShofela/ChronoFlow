@@ -75,7 +75,7 @@ export function ActivityList({
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                       <button
-                        className="flex items-center gap-2 text-primary underline font-semibold hover:text-primary/80 transition-colors"
+                        className="flex items-center gap-2 font-semibold hover:text-primary transition-colors"
                         onClick={() => onGoToSettings(activity)}
                         aria-label={`Modifier l'activité ${activity.name}`}
                         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
