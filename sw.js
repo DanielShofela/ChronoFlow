@@ -1,5 +1,5 @@
 // Version de cache - À incrémenter à chaque déploiement majeur
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `chronoflow-${CACHE_VERSION}`;
 
 // Liste des ressources à mettre en cache
@@ -9,7 +9,9 @@ const CACHED_ASSETS = [
   '/manifest.webmanifest',
   '/icon-192x192.png',
   '/icon-512x512.png',
-  '/icon_header.png'
+  '/icon_header.png',
+  'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/',
+  'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/emoji.json'
 ];
 
 // Liste des extensions de fichiers à mettre en cache
@@ -71,10 +73,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Stratégie de cache : Cache First pour les ressources statiques, Network First pour le reste
+// Stratégie de cache : Cache First pour les ressources statiques et les emojis, Network First pour le reste
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  const isCacheFirst = CACHE_FILE_EXTENSIONS.some(ext => url.pathname.endsWith(ext)) ||
+  const isEmoji = url.href.includes('emoji-datasource-apple');
+  const isCacheFirst = isEmoji || 
+                      CACHE_FILE_EXTENSIONS.some(ext => url.pathname.endsWith(ext)) ||
                       CACHED_ASSETS.includes(url.pathname);
 
   event.respondWith(

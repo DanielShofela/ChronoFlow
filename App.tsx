@@ -11,7 +11,7 @@ import { verses } from "./data/verses";
 import { sampleCompletedSlots } from "./data/sample-completed-slots";
 import { Clock24h } from "./components/Clock24h";
 import { ActivityList } from "./components/ActivityList";
-import { SettingsView } from "./components/SettingsView";
+import SettingsView from "./components/SettingsView";
 import StatsView from "./components/StatsView";
 import { FaqView } from "./components/FaqView";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -209,6 +209,8 @@ export default function App() {
                     isPlanned = activity.specificDate === dateKey;
                 }
 
+                // Si l'activité est récurrente, on continue de compter les jours consécutifs
+                // où l'activité était planifiée et complétée
                 if (isPlanned) {
                     if (isActivityCompletedOnDate(activity, dateToCheck, completedSlotsSet)) {
                         currentStreak++;
@@ -216,8 +218,14 @@ export default function App() {
                         // Break the streak if a planned day was not completed
                         break;
                     }
+                } else {
+                    // Pour les activités non récurrentes, on s'arrête si on dépasse leur date spécifique
+                    if (!isRecurring && dateKey < activity.specificDate) {
+                        break;
+                    }
+                    // Pour les activités récurrentes, on ignore les jours non planifiés
+                    // sans rompre la série (ne pas incrémenter, juste continuer)
                 }
-                // If not planned, continue to the previous day without breaking the streak.
 
                 dateToCheck = addDays(dateToCheck, -1);
             }

@@ -1,0 +1,6 @@
+{
+  "name": "@chronoflow/hooks",
+  "private": true,
+  "type": "module",
+  "types": "useCustomColors.ts"
+}

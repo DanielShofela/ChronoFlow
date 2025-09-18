@@ -77,12 +77,11 @@ export function ActivityList({
                       <span className="text-2xl">{activity.icon}</span>
                       <div>
                         <div className="flex items-center gap-2">
-                           {streaks[activity.id] > 0 && <StreakFlame streakCount={streaks[activity.id]} />}
-                           <h3 className={cn("font-semibold", completed && 'line-through text-muted-foreground')}>
+                          <h3 className={cn("font-semibold", completed && 'line-through text-muted-foreground')}>
                             {activity.name}
                           </h3>
                           {activity.reminderMinutes && activity.reminderMinutes > 0 && (
-                            <Bell className="w-4 h-4 text-amber-500" title={`Rappel ${activity.reminderMinutes} minutes avant.`} />
+                            <Bell className="w-4 h-4 text-primary" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -90,9 +89,12 @@ export function ActivityList({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                        {completed ? (
-                         <CheckCircle className="w-5 h-5 text-green-500" />
+                         <>
+                           <CheckCircle className="w-5 h-5 text-green-500" />
+                           {streaks[activity.id] > 0 && <StreakFlame streakCount={streaks[activity.id]} />}
+                         </>
                        ) : (
                          <Circle className="w-5 h-5 text-muted-foreground" />
                        )}

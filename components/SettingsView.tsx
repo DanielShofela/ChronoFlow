@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Edit, Trash2, Archive, ArchiveRestore, X, Bell, BookOpen, Palette, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Archive, ArchiveRestore, X, Bell, BookOpen, Palette, ChevronDown, Trash } from 'lucide-react';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import type { Activity } from '../types';
 import { cn, isColorLight } from '../utils';
 import { predefinedColors } from '../constants';
 import { ConfirmationDialog } from './ConfirmationDialog';
 import { useTheme } from '../hooks/useTheme';
+import { useCustomColors } from '../hooks/useCustomColors.ts';
+
+type NotificationPermission = "default" | "granted" | "denied";
+type PermissionState = "granted" | "prompt" | "denied";
 
 interface SettingsViewProps {
   activities: Activity[];
@@ -61,9 +66,59 @@ function ActivityForm({
   });
   
   const { theme } = useTheme();
+  const { customColors, addCustomColor, removeCustomColor, isCustomColorDeleted } = useCustomColors();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showColorInput, setShowColorInput] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartHour, setDragStartHour] = useState<number | null>(null);
+  const [customColorInput, setCustomColorInput] = useState('');
+  const [colorToDelete, setColorToDelete] = useState<string | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+
+  // Nouvelle fonction pour gérer la sélection glissante des créneaux
+  const handleSlotMouseDown = (hour: number) => {
+    setIsDragging(true);
+    setDragStartHour(hour);
+    toggleSlot(hour);
+  };
+
+  const handleSlotMouseEnter = (hour: number) => {
+    if (isDragging && dragStartHour !== null) {
+      const start = Math.min(dragStartHour, hour);
+      const end = Math.max(dragStartHour, hour);
+      const newSlots = new Set(formData.slots);
+      
+      // Si on commence sur un créneau non sélectionné, on ajoute
+      // Si on commence sur un créneau sélectionné, on retire
+      const shouldAdd = !formData.slots.includes(dragStartHour);
+      
+      for (let h = start; h <= end; h++) {
+        if (shouldAdd) {
+          newSlots.add(h);
+        } else {
+          newSlots.delete(h);
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        slots: Array.from(newSlots).sort((a, b) => a - b),
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragStartHour(null);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => window.removeEventListener('mouseup', handleMouseUp);
+    }
+  }, [isDragging]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -123,12 +178,29 @@ function ActivityForm({
   const isCustomColor = !predefinedColors.includes(formData.color);
 
   return (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <>
+      <AnimatePresence>
+        {colorToDelete && (
+          <ConfirmationDialog
+            isOpen={!!colorToDelete}
+            title="Supprimer la couleur personnalisée"
+            message="Cette couleur sera conservée pour les activités existantes mais ne sera plus disponible pour les nouvelles activités. Êtes-vous sûr de vouloir continuer ?"
+            confirmText="Supprimer"
+            onConfirm={() => {
+              removeCustomColor(colorToDelete);
+              setColorToDelete(null);
+            }}
+            onClose={() => setColorToDelete(null)}
+          />
+        )}
+      </AnimatePresence>
+      
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel}></div>
       <motion.div
         className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl bg-card border shadow-xl"
@@ -186,42 +258,102 @@ function ActivityForm({
                     )}
                  </div>
             </div>
-            <div>
-            <label className="text-sm font-medium">Couleur</label>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              {predefinedColors.map(color => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, color }))}
-                  className={cn("w-8 h-8 rounded-full border-2 transition-transform", !isCustomColor && formData.color === color ? 'border-primary scale-110' : 'border-transparent')}
-                  style={{ backgroundColor: color }}
-                  aria-label={`Select color ${color}`}
-                ></button>
-              ))}
-               <div className="relative">
-                 <button
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Couleur</label>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {predefinedColors.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, color }))}
+                      className={cn("w-8 h-8 rounded-full border-2 transition-transform", 
+                        !isCustomColor && formData.color === color ? 'border-primary scale-110' : 'border-transparent')}
+                      style={{ backgroundColor: color }}
+                      aria-label={`Select color ${color}`}
+                    ></button>
+                  ))}
+                  
+                  {customColors.map(color => (
+                    <div key={color} className="relative group">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, color }))}
+                        className={cn("w-8 h-8 rounded-full border-2 transition-transform", 
+                          isCustomColor && formData.color === color ? 'border-primary scale-110' : 'border-transparent')}
+                        style={{ backgroundColor: color }}
+                        aria-label={`Select custom color ${color}`}
+                      ></button>
+                      <button
+                        type="button"
+                        onClick={() => setColorToDelete(color)}
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-background border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={`Delete custom color ${color}`}
+                      >
+                        <Trash className="w-3 h-3 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <button
                     type="button"
-                    onClick={() => colorInputRef.current?.click()}
-                    className={cn(
-                        "w-8 h-8 rounded-full border-2 flex items-center justify-center transition-transform",
-                        isCustomColor ? 'border-primary scale-110' : 'border-border hover:border-muted-foreground'
-                    )}
-                    style={{ backgroundColor: isCustomColor ? formData.color : 'transparent' }}
-                    aria-label="Choose custom color"
-                 >
-                    {!isCustomColor && <Plus className="w-4 h-4 text-muted-foreground" />}
-                 </button>
-                 <input
-                    ref={colorInputRef}
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                    className="absolute invisible"
-                 />
+                    onClick={() => setShowColorInput(true)}
+                    className="w-8 h-8 rounded-full border-2 border-border hover:border-muted-foreground flex items-center justify-center"
+                    aria-label="Add custom color"
+                  >
+                    <Plus className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
+              
+              {showColorInput && (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={customColorInput}
+                      onChange={(e) => setCustomColorInput(e.target.value)}
+                      placeholder="#000000"
+                      className="w-full h-9 px-3 border rounded-lg bg-background pr-12"
+                      pattern="^#[0-9A-Fa-f]{6}$"
+                    />
+                    <div className="absolute right-1 top-1 bottom-1 flex items-center gap-1">
+                      <input
+                        ref={colorInputRef}
+                        type="color"
+                        value={customColorInput || '#000000'}
+                        onChange={(e) => setCustomColorInput(e.target.value)}
+                        className="w-7 h-7"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (/^#[0-9A-Fa-f]{6}$/.test(customColorInput)) {
+                        addCustomColor(customColorInput);
+                        setFormData(prev => ({ ...prev, color: customColorInput }));
+                        setCustomColorInput('');
+                        setShowColorInput(false);
+                      }
+                    }}
+                    className="h-9 px-3 font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Ajouter
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowColorInput(false);
+                      setCustomColorInput('');
+                    }}
+                    className="h-9 px-2 font-medium rounded-lg hover:bg-muted"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
           </div>
           
           <div>
@@ -274,8 +406,9 @@ function ActivityForm({
                 <button
                   key={hour}
                   type="button"
-                  onClick={() => toggleSlot(hour)}
-                  className={cn("h-10 text-sm font-bold rounded-lg transition-colors", formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')}
+                  onMouseDown={() => handleSlotMouseDown(hour)}
+                  onMouseEnter={() => handleSlotMouseEnter(hour)}
+                  className={cn("h-10 text-sm font-bold rounded-lg transition-colors select-none", formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')}
                 >{hour}</button>
               ))}
             </div>
@@ -304,10 +437,17 @@ function ActivityForm({
         </form>
       </motion.div>
     </motion.div>
+    </>
   );
 }
 
-export function SettingsView({ activities, onActivitiesChange, onBack, showVerse, onShowVerseChange }: SettingsViewProps) {
+export default function SettingsView({
+  activities,
+  onActivitiesChange,
+  onBack,
+  showVerse,
+  onShowVerseChange,
+}: SettingsViewProps) {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
   const [view, setView] = useState<'active' | 'archived'>('active');
@@ -316,21 +456,21 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
 
   useEffect(() => {
     if ('permissions' in navigator) {
-        navigator.permissions.query({ name: 'notifications' }).then(permissionStatus => {
-            setNotificationPermission(permissionStatus.state);
-            permissionStatus.onchange = () => {
-                setNotificationPermission(permissionStatus.state);
-            };
-        });
+      navigator.permissions.query({ name: 'notifications' }).then(permissionStatus => {
+        setNotificationPermission(permissionStatus.state);
+        permissionStatus.onchange = () => {
+          setNotificationPermission(permissionStatus.state);
+        };
+      });
     } else if ('Notification' in window) {
-        setNotificationPermission(Notification.permission);
+      setNotificationPermission(Notification.permission);
     }
   }, []);
-  
+
   const requestNotificationPermission = () => {
     if (!('Notification' in window)) return;
     Notification.requestPermission().then(permission => {
-        setNotificationPermission(permission);
+      setNotificationPermission(permission);
     });
   };
 
@@ -344,21 +484,21 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
     setEditingActivity(null);
     setShowForm(false);
   };
-  
+
   const handleArchive = (activity: Activity) => {
     onActivitiesChange(activities.map(a => a.id === activity.id ? {...a, isArchived: true} : a));
   };
-  
+
   const handleUnarchive = (activity: Activity) => {
     onActivitiesChange(activities.map(a => a.id === activity.id ? {...a, isArchived: false} : a));
   };
-  
+
   const handleDelete = () => {
     if (!activityToDelete) return;
     onActivitiesChange(activities.filter(a => a.id !== activityToDelete.id));
     setActivityToDelete(null);
   };
-  
+
   const activeActivities = activities.filter(a => !a.isArchived);
   const archivedActivities = activities.filter(a => a.isArchived);
 
@@ -373,34 +513,34 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-muted transition-colors"><ArrowLeft className="w-5 h-5" /></button>
         <h2 className="text-2xl font-bold">Activités et Paramètres</h2>
       </div>
-      
+
       <AnimatePresence>
         {showForm && (
-           <ActivityForm 
-              activity={editingActivity} 
-              onSave={handleSaveActivity} 
-              onCancel={() => { setShowForm(false); setEditingActivity(null); }}
-           />
+          <ActivityForm 
+            activity={editingActivity}
+            onSave={handleSaveActivity}
+            onCancel={() => { setShowForm(false); setEditingActivity(null); }}
+          />
         )}
       </AnimatePresence>
 
       <div className="p-6 rounded-xl border bg-card">
         <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Gérer les activités</h3>
-              {notificationPermission === 'granted' && (
-                <Bell className="w-4 h-4 text-green-500" title="Les notifications sont activées" />
-              )}
-            </div>
-            <motion.button 
-              onClick={() => { setEditingActivity(null); setShowForm(true); }}
-              className="flex items-center gap-2 px-4 h-10 bg-primary text-primary-foreground rounded-lg font-semibold text-sm"
-              whileTap={{ scale: 0.95 }}
-            >
-              <Plus className="w-4 h-4" /> Ajouter
-            </motion.button>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">Gérer les activités</h3>
+            {notificationPermission === 'granted' && (
+              <Bell className="w-4 h-4 text-primary" aria-label="Les notifications sont activées" />
+            )}
+          </div>
+          <motion.button 
+            onClick={() => { setEditingActivity(null); setShowForm(true); }}
+            className="flex items-center gap-2 px-4 h-10 bg-primary text-primary-foreground rounded-lg font-semibold text-sm"
+            whileTap={{ scale: 0.95 }}
+          >
+            <Plus className="w-4 h-4" /> Ajouter
+          </motion.button>
         </div>
-        
+
         <div className="mt-4 border-b">
           <div className="flex space-x-4">
             <button onClick={() => setView('active')} className={cn("px-3 py-2 font-medium text-sm", view === 'active' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground')}>Actives ({activeActivities.length})</button>
@@ -409,69 +549,69 @@ export function SettingsView({ activities, onActivitiesChange, onBack, showVerse
         </div>
 
         <div className="mt-4 space-y-3 max-h-96 overflow-y-auto pr-2">
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={view}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                >
-                    {(view === 'active' ? activeActivities : archivedActivities).map(activity => (
-                        <div key={activity.id} className="p-3 flex items-center justify-between rounded-lg bg-muted/50">
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl">{activity.icon}</span>
-                                <span className="font-medium">{activity.name}</span>
-                                {activity.reminderMinutes && activity.reminderMinutes > 0 && (
-                                    <Bell className="w-4 h-4 text-amber-500" title={`Rappel ${activity.reminderMinutes} minutes avant.`} />
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {view === 'active' ? (
-                                    <>
-                                        <button onClick={() => { setEditingActivity(activity); setShowForm(true); }} className="p-2 hover:bg-background rounded-md"><Edit className="w-4 h-4" /></button>
-                                        <button onClick={() => handleArchive(activity)} className="p-2 hover:bg-background rounded-md"><Archive className="w-4 h-4" /></button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button onClick={() => handleUnarchive(activity)} className="p-2 hover:bg-background rounded-md"><ArchiveRestore className="w-4 h-4" /></button>
-                                        <button onClick={() => setActivityToDelete(activity)} className="p-2 text-destructive hover:bg-destructive/10 rounded-md"><Trash2 className="w-4 h-4" /></button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                    {(view === 'active' && activeActivities.length === 0) && <p className="text-center text-muted-foreground py-4">Aucune activité active.</p>}
-                    {(view === 'archived' && archivedActivities.length === 0) && <p className="text-center text-muted-foreground py-4">Aucune activité archivée.</p>}
-                </motion.div>
-            </AnimatePresence>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              {(view === 'active' ? activeActivities : archivedActivities).map(activity => (
+                <div key={activity.id} className="p-3 flex items-center justify-between rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{activity.icon}</span>
+                    <span className="font-medium">{activity.name}</span>
+                    {activity.reminderMinutes && activity.reminderMinutes > 0 && (
+                      <Bell className="w-4 h-4 text-primary" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {view === 'active' ? (
+                      <>
+                        <button onClick={() => { setEditingActivity(activity); setShowForm(true); }} className="p-2 hover:bg-background rounded-md"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleArchive(activity)} className="p-2 hover:bg-background rounded-md"><Archive className="w-4 h-4" /></button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleUnarchive(activity)} className="p-2 hover:bg-background rounded-md"><ArchiveRestore className="w-4 h-4" /></button>
+                        <button onClick={() => setActivityToDelete(activity)} className="p-2 text-destructive hover:bg-destructive/10 rounded-md"><Trash2 className="w-4 h-4" /></button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {(view === 'active' && activeActivities.length === 0) && <p className="text-center text-muted-foreground py-4">Aucune activité active.</p>}
+              {(view === 'archived' && archivedActivities.length === 0) && <p className="text-center text-muted-foreground py-4">Aucune activité archivée.</p>}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
-      
+
       <div className="p-6 rounded-xl border bg-card">
-          <h3 className="text-lg font-semibold mb-4">Préférences</h3>
-          <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                    <Bell className="w-5 h-5 text-muted-foreground"/>
-                    <span className="font-medium">Notifications de rappel</span>
-                </div>
-                {notificationPermission === 'granted' && <span className="text-sm text-green-600 font-medium">Activées</span>}
-                {notificationPermission === 'denied' && <span className="text-sm text-destructive font-medium">Bloquées</span>}
-                {(notificationPermission === 'default' || notificationPermission === 'prompt') && <button onClick={requestNotificationPermission} className="text-sm font-semibold text-primary hover:underline">Activer</button>}
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                    <BookOpen className="w-5 h-5 text-muted-foreground"/>
-                    <span className="font-medium">Afficher le verset du jour</span>
-                </div>
-                <button
-                    onClick={() => onShowVerseChange(!showVerse)}
-                    className={cn("relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out", showVerse ? 'bg-primary' : 'bg-muted-foreground/50')}
-                >
-                    <span className={cn("inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out", showVerse ? 'translate-x-5' : 'translate-x-0')} />
-                </button>
-              </div>
+        <h3 className="text-lg font-semibold mb-4">Préférences</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5 text-muted-foreground"/>
+              <span className="font-medium">Notifications de rappel</span>
+            </div>
+            {notificationPermission === 'granted' && <span className="text-sm text-green-600 font-medium">Activées</span>}
+            {notificationPermission === 'denied' && <span className="text-sm text-destructive font-medium">Bloquées</span>}
+            {(notificationPermission === 'default' || notificationPermission === 'prompt') && <button onClick={requestNotificationPermission} className="text-sm font-semibold text-primary hover:underline">Activer</button>}
           </div>
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-muted-foreground"/>
+              <span className="font-medium">Afficher le verset du jour</span>
+            </div>
+            <button
+              onClick={() => onShowVerseChange(!showVerse)}
+              className={cn("relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out", showVerse ? 'bg-primary' : 'bg-muted-foreground/50')}
+            >
+              <span className={cn("inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out", showVerse ? 'translate-x-5' : 'translate-x-0')} />
+            </button>
+          </div>
+        </div>
       </div>
 
       <ConfirmationDialog 

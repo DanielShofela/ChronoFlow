@@ -13,7 +13,8 @@ import {
 } from 'date-fns';
 import { fr } from 'date-fns/locale/fr';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Flame, Trophy } from 'lucide-react';
+import { ArrowLeft, Trophy } from 'lucide-react';
+import { StreakFlame } from './StreakFlame';
 import {
   PieChart,
   Pie,
@@ -243,7 +244,22 @@ export default function StatsView({ activities, completedSlots, selectedDate, on
           } else {
             break;
           }
+        } else {
+          // Pour les activités non récurrentes, on arrête si on dépasse leur date spécifique
+          if (!isRecurring && dateKey < activity.specificDate) {
+            break;
+          }
         }
+        
+        // Si c'est une activité récurrente et qu'on a dépassé sa date de création
+        // on arrête pour ne pas compter les jours avant sa création
+        if (isRecurring && activity.id.startsWith('user-')) {
+          const creationTimestamp = Number(activity.id.split('-')[1]);
+          if (checkDate.getTime() < creationTimestamp) {
+            break;
+          }
+        }
+        
         checkDate = subDays(checkDate, 1);
       }
 
@@ -345,10 +361,7 @@ export default function StatsView({ activities, completedSlots, selectedDate, on
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium truncate">{streak.name}</h3>
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-amber-500" title="Série actuelle">
-                          <Flame className="w-4 h-4" />
-                          <span>{streak.current}</span>
-                        </div>
+                        <StreakFlame streakCount={streak.current} />
                         <div className="flex items-center gap-1 text-emerald-500" title="Plus longue série">
                           <Trophy className="w-4 h-4" />
                           <span>{streak.longest}</span>
