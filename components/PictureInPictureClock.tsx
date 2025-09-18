@@ -19,10 +19,9 @@ const drawClock = (
   currentTime: Date
 ) => {
   const center = size / 2;
-  const activityRadius = size * 0.47; // Augmenté pour des créneaux plus longs
-  const innerRadius = size * 0.22; // Rayon du cercle interne
-  const dateCircleRadius = size * 0.17; // Cercle de la date au centre
-  const activityInnerRadius = size * 0.34; // Rayon interne des activités
+  const activityRadius = size * 0.42;
+  const innerRadius = size * 0.12; // Réduit de 0.15 à 0.12
+  const dateCircleRadius = size * 0.17; // Réduit de 0.20 à 0.17
 
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#18181b' : '#ffffff';
@@ -75,8 +74,8 @@ const drawClock = (
     const endAngle = (((hour + 1) - 6) * 15 - 0.5) * (Math.PI / 180);
 
     ctx.beginPath();
-    ctx.arc(center, center, (activityRadius + activityInnerRadius) / 2, startAngle, endAngle);
-    ctx.lineWidth = (activityRadius - activityInnerRadius) * 0.99; // Presque collé au cercle interne
+    ctx.arc(center, center, (activityRadius + innerRadius) / 2, startAngle, endAngle);
+    ctx.lineWidth = (activityRadius - innerRadius) * 0.7; // Réduit de 0.8 à 0.7 pour créer un espace
     ctx.strokeStyle = activity ? activity.color : 'transparent';
     ctx.stroke();
   }
@@ -160,7 +159,7 @@ const drawClock = (
 
   // Date sous l'heure
   ctx.font = `${size * 0.035}px system-ui, sans-serif`;
-  ctx.fillStyle = isDark ? '#d4d4d8' : '#3f3f46'; // Couleurs plus foncées pour une meilleure lisibilité
+  ctx.fillStyle = isDark ? '#e4e4e7' : '#3f3f46'; // Couleurs plus foncées pour une meilleure lisibilité
   ctx.fillText(dayString, center, center + size * 0.05);
 };
 
