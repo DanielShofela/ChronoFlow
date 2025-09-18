@@ -104,15 +104,6 @@ function ActivityForm({
     setFormData(prev => ({ ...prev, [name]: name === 'reminderMinutes' ? (value === 'none' ? undefined : Number(value)) : value }));
   };
 
-  const toggleSlot = (hour: number) => {
-    setFormData(prev => ({
-      ...prev,
-      slots: prev.slots.includes(hour)
-        ? prev.slots.filter(s => s !== hour)
-        : [...prev.slots, hour].sort((a, b) => a - b),
-    }));
-  };
-
   const toggleDay = (day: number) => {
     setFormData(prev => ({
       ...prev,
