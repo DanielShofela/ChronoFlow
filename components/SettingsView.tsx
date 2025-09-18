@@ -72,86 +72,20 @@ function ActivityForm({
   const [showColorInput, setShowColorInput] = useState(false);
   const [customColorInput, setCustomColorInput] = useState('');
   const [colorToDelete, setColorToDelete] = useState<string | null>(null);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [shouldSelect, setShouldSelect] = useState(true);
-  const [startHour, setStartHour] = useState<number | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
-  // Fonction utilitaire pour mettre à jour les créneaux
-  const updateSlots = (fromHour: number, toHour: number, select: boolean) => {
-    const start = Math.min(fromHour, toHour);
-    const end = Math.max(fromHour, toHour);
-    const newSlots = new Set(formData.slots);
-    
-    for (let h = start; h <= end; h++) {
-      if (select) {
-        newSlots.add(h);
-      } else {
-        newSlots.delete(h);
-      }
-    }
-    
+  // Fonction pour basculer l'état d'un créneau
+  const toggleSlot = (hour: number) => {
     setFormData(prev => ({
       ...prev,
-      slots: Array.from(newSlots).sort((a, b) => a - b),
+      slots: prev.slots.includes(hour)
+        ? prev.slots.filter(s => s !== hour)
+        : [...prev.slots, hour].sort((a, b) => a - b),
     }));
   };
 
-  // Gestion des événements souris
-  const handleSlotMouseDown = (hour: number) => {
-    setIsSelecting(true);
-    setStartHour(hour);
-    setShouldSelect(!formData.slots.includes(hour));
-    toggleSlot(hour);
-  };
 
-  const handleSlotMouseEnter = (hour: number) => {
-    if (isSelecting && startHour !== null) {
-      updateSlots(startHour, hour, shouldSelect);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsSelecting(false);
-    setStartHour(null);
-  };
-
-  // Gestion des événements tactiles
-  const handleTouchStart = (hour: number) => {
-    setIsSelecting(true);
-    setStartHour(hour);
-    setShouldSelect(!formData.slots.includes(hour));
-    toggleSlot(hour);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent, hour: number) => {
-    e.preventDefault(); // Empêche le défilement pendant le glissement
-    if (isSelecting && startHour !== null) {
-      updateSlots(startHour, hour, shouldSelect);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsSelecting(false);
-    setStartHour(null);
-  };
-
-  // Gestionnaire d'événements unifié pour le glissement
-  const getSlotHandlers = (hour: number) => ({
-    onMouseDown: () => handleSlotMouseDown(hour),
-    onMouseEnter: () => handleSlotMouseEnter(hour),
-    onTouchStart: () => handleTouchStart(hour),
-    onTouchMove: (e: React.TouchEvent) => handleTouchMove(e, hour),
-    onTouchEnd: handleTouchEnd,
-  });
-
-  useEffect(() => {
-    if (isSelecting) {
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => window.removeEventListener('mouseup', handleMouseUp);
-    }
-  }, [isSelecting]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -439,10 +373,7 @@ function ActivityForm({
                 <button
                   key={hour}
                   type="button"
-                  {...getSlotHandlers(hour)}
-                  style={{
-                    ...(isSelecting && startHour !== null) ? { filter: 'brightness(1.2)' } : {}
-                  }}
+                  onClick={() => toggleSlot(hour)}
                   className={cn(
                     "h-10 text-sm font-bold rounded-lg transition-colors select-none touch-none",
                     formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
