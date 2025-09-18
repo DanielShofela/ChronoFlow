@@ -14,27 +14,12 @@ export function UpdateToast({ onClose }: UpdateToastProps) {
     setUpdating(true);
     
     try {
-      // Unregister current service worker
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(reg => reg.unregister()));
-      }
+      // Déclencher la mise à jour via le hook useServiceWorkerUpdate
+      const event = new CustomEvent('apply-update');
+      window.dispatchEvent(event);
 
-      // Clear all caches
-      if ('caches' in window) {
-        const cacheKeys = await caches.keys();
-        await Promise.all(cacheKeys.map(key => caches.delete(key)));
-      }
-
-      // Force reload from server
-      window.localStorage.setItem('lastUpdateTime', new Date().toISOString());
       setUpdateComplete(true);
       
-      // Reload après une courte pause pour montrer le succès
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
     } catch (error) {
       console.error('Erreur lors de la mise à jour :', error);
       setUpdating(false);

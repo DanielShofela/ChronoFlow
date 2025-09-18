@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { format, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale/fr';
 import type { Activity } from '../types';
+
+// Durée du maintien pour activer la sélection (en ms)
+const LONG_PRESS_DURATION = 500;
 
 interface Clock24hProps {
   activities: Activity[];
@@ -16,6 +19,16 @@ interface Clock24hProps {
 export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggle, currentTime, isPastDate }: Clock24hProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(380);
+  const [isSelectionActive, setIsSelectionActive] = useState(false);
+  const [lastTouchedHour, setLastTouchedHour] = useState<number | null>(null);
+  const longPressTimer = useRef<number | null>(null);
+
+  // Fonction pour déclencher la vibration
+  const vibrate = useCallback(() => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+  }, []);
 
   useEffect(() => {
     const observer = new ResizeObserver(entries => {
@@ -106,8 +119,51 @@ export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggl
             return (
               <motion.g
                 key={i}
-                className={!isPastDate ? 'cursor-pointer' : 'cursor-not-allowed'}
-                onClick={!isPastDate ? () => onSlotToggle(i) : undefined}
+                className={!isPastDate ? 'cursor-pointer touch-none' : 'cursor-not-allowed touch-none'}
+                onClick={!isPastDate && !('ontouchstart' in window) ? () => onSlotToggle(i) : undefined}
+                onTouchStart={(e) => {
+                  if (isPastDate) return;
+                  e.preventDefault();
+                  setLastTouchedHour(i);
+                  longPressTimer.current = window.setTimeout(() => {
+                    vibrate();
+                    setIsSelectionActive(true);
+                    onSlotToggle(i);
+                  }, LONG_PRESS_DURATION);
+                }}
+                onTouchMove={(e) => {
+                  if (isPastDate || !isSelectionActive) return;
+                  e.preventDefault();
+                  const touch = e.touches[0];
+                  const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                  const hourElement = element?.closest('g[data-hour]');
+                  if (hourElement) {
+                    const hour = parseInt(hourElement.getAttribute('data-hour') || '', 10);
+                    if (!isNaN(hour) && hour !== lastTouchedHour) {
+                      setLastTouchedHour(hour);
+                      onSlotToggle(hour);
+                    }
+                  }
+                }}
+                onTouchEnd={() => {
+                  if (isPastDate) return;
+                  if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                    longPressTimer.current = null;
+                  }
+                  setIsSelectionActive(false);
+                  setLastTouchedHour(null);
+                }}
+                onTouchCancel={() => {
+                  if (isPastDate) return;
+                  if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                    longPressTimer.current = null;
+                  }
+                  setIsSelectionActive(false);
+                  setLastTouchedHour(null);
+                }}
+                data-hour={i}
                 {...{ whileHover: !isPastDate ? { scale: 1.03 } : {} }}
                 style={{ transformOrigin: 'center center' }}
               >
@@ -117,7 +173,10 @@ export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggl
                   fillOpacity={completed ? 1 : (activity ? 0.4 : 0.2)}
                   stroke={'hsl(var(--background))'}
                   strokeWidth="2"
-                  style={showClockHand && i === currentHour ? { filter: 'url(#glow)' } : {}}
+                  style={{
+                    ...showClockHand && i === currentHour ? { filter: 'url(#glow)' } : {},
+                    ...(isSelectionActive && i === lastTouchedHour) ? { filter: 'brightness(1.2)' } : {}
+                  }}
                 />
               </motion.g>
             );

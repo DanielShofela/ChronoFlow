@@ -48,12 +48,37 @@ export default function App() {
   const [isPipEnabled, setPipEnabled] = useState(false);
   const [isPipSupported, setIsPipSupported] = useState(false);
   const { updateAvailable, installUpdate } = useServiceWorkerUpdate();
-  const { isOnline, showToast: showConnectionToast } = useConnectionStatus();
+  const { isOnline, showToast: showConnectionToast, status: connectionStatus } = useConnectionStatus();
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [connectionStatusToast, setConnectionStatusToast] = useState<'online' | 'offline' | null>(null);
   const [showOnboarding, setShowOnboarding] = useLocalStorage('showOnboarding', true);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showUpdateToast, setShowUpdateToast] = useState(false);
+
+  // Gérer les mises à jour
+  useEffect(() => {
+    if (updateAvailable && process.env.NODE_ENV === 'production') {
+      const lastIgnoredVersion = localStorage.getItem('lastIgnoredUpdateVersion');
+      const pendingVersion = sessionStorage.getItem('pendingVersion');
+      
+      // Montrer la notification seulement si cette version n'a pas été ignorée
+      if (pendingVersion && lastIgnoredVersion !== pendingVersion) {
+        setShowUpdateToast(true);
+      }
+    }
+  }, [updateAvailable]);
+
+  // Gérer l'application de la mise à jour
+  useEffect(() => {
+    const handleApplyUpdate = () => {
+      if (installUpdate) {
+        installUpdate();
+      }
+    };
+
+    window.addEventListener('apply-update', handleApplyUpdate);
+    return () => window.removeEventListener('apply-update', handleApplyUpdate);
+  }, [installUpdate]);
   
   // State for reminders
   const [sentReminders, setSentReminders] = useState(new Set<string>());
@@ -240,16 +265,7 @@ export default function App() {
     }, [activities, selectedDate, completedSlotsSet]);
 
   useEffect(() => {
-    const handleOnline = () => {
-      setConnectionStatusToast('online');
-      // Réinitialiser après 5 secondes
-      setTimeout(() => setConnectionStatusToast(null), 5000);
-    };
-    
-    const handleOffline = () => {
-      setConnectionStatusToast('offline');
-      // Garde la notification offline visible
-    };
+    // Les gestionnaires d'état de connexion sont maintenant gérés par le hook useConnectionStatus
 
     if (typeof document !== 'undefined') {
       if ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
@@ -257,21 +273,7 @@ export default function App() {
       }
       setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
 
-      // Vérifier l'état de la connexion au chargement initial
-      const isOnline = navigator.onLine;
-      setConnectionStatusToast(isOnline ? 'online' : 'offline');
-      if (isOnline) {
-        // Si en ligne au démarrage, masquer après 5 secondes
-        setTimeout(() => setConnectionStatusToast(null), 5000);
-      }
-      
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
-      
-      return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      };
+      // L'état de connexion est maintenant géré par le hook useConnectionStatus
     }
 
     // Vérifie les mises à jour du service worker
@@ -335,14 +337,7 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (connectionStatusToast) {
-        const timer = setTimeout(() => {
-            setConnectionStatusToast(null);
-        }, 4000); // Hide after 4 seconds
-        return () => clearTimeout(timer);
-    }
-  }, [connectionStatusToast]);
+  // Le timer de masquage des notifications est maintenant géré par le hook useConnectionStatus
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -718,15 +713,22 @@ export default function App() {
           currentTime={currentTime}
         />
       )}
-      <ConnectionStatusToast
-        isOnline={isOnline}
-        show={showConnectionToast}
-      />
-      <UpdateToast
-        show={updateAvailable && isOnline}
-        onUpdate={installUpdate}
-        autoUpdate={false}
-      />
+      <AnimatePresence>
+        {showConnectionToast && (
+          <ConnectionStatusToast
+            status={connectionStatus}
+            show={showConnectionToast}
+            onClose={() => {}}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showUpdateToast && (
+          <UpdateToast
+            onClose={() => setShowUpdateToast(false)}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {!isStandalone && installPromptEvent && (
           <InstallPrompt onInstall={handleInstallClick} />

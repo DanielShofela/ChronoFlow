@@ -1,5 +1,5 @@
 // Version de cache - À incrémenter à chaque déploiement majeur
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `chronoflow-${CACHE_VERSION}`;
 
 // Liste des ressources à mettre en cache
@@ -23,63 +23,20 @@ const CACHE_FILE_EXTENSIONS = [
   '.ttf'
 ];
 
-// Force le rechargement des ressources si la version change
-const FORCE_CACHE_UPDATE = true;
-
 // Installation du service worker
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CACHED_ASSETS).then(() => {
-        // Forcer l'activation immédiate du SW
-        self.skipWaiting();
-      });
-    })
-  );
-});
-
-// Écoute des messages du client
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  // Ne pas skipWaiting automatiquement en production
+  if (process.env.NODE_ENV === 'development') {
     self.skipWaiting();
   }
-});
-
-// Activation du service worker
-self.addEventListener('activate', (event) => {
+  
   event.waitUntil(
     Promise.all([
-      // Nettoyage des anciens caches
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames
-            .filter(name => name.startsWith('chronoflow-') && name !== CACHE_NAME)
-            .map(name => caches.delete(name))
-        );
+      // Installation des caches
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(CACHED_ASSETS);
       }),
-      // Prendre le contrôle de tous les clients
-      clients.claim().then(() => {
-        // Notifier tous les clients qu'une nouvelle version est disponible
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'NEW_VERSION_ACTIVATED',
-              version: CACHE_VERSION
-            });
-          });
-        });
-      })
-    ])
-    Promise.all([
-      // Supprime tous les anciens caches
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((name) => name.startsWith('chronoflow-') && name !== CACHE_NAME)
-            .map((name) => caches.delete(name))
-        );
-      }),
-      // Notifie l'application qu'une mise à jour est disponible
+      // Notifier d'une mise à jour disponible
       self.clients.matchAll().then(clients => {
         clients.forEach(client => {
           client.postMessage({
@@ -90,8 +47,44 @@ self.addEventListener('activate', (event) => {
       })
     ])
   );
-  // Prend le contrôle immédiatement
-  self.clients.claim();
+});
+
+// Écoute des messages du client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting().then(() => {
+      // Prendre le contrôle après skipWaiting
+      clients.claim();
+      
+      // Notifier que la nouvelle version est activée
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'NEW_VERSION_ACTIVATED',
+            version: CACHE_VERSION
+          });
+        });
+      });
+    });
+  }
+});
+
+// Activation du service worker
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames
+          .filter(name => name.startsWith('chronoflow-') && name !== CACHE_NAME)
+          .map(name => caches.delete(name))
+      );
+    })
+  );
+  
+  // En développement, prendre le contrôle immédiatement
+  if (process.env.NODE_ENV === 'development') {
+    clients.claim();
+  }
 });
 
 // Stratégie de cache : Cache First pour les ressources statiques et les emojis, Network First pour le reste
