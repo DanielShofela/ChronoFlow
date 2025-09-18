@@ -70,23 +70,22 @@ function ActivityForm({
   const { customColors, addCustomColor, removeCustomColor, isCustomColorDeleted } = useCustomColors();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showColorInput, setShowColorInput] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartHour, setDragStartHour] = useState<number | null>(null);
   const [customColorInput, setCustomColorInput] = useState('');
   const [colorToDelete, setColorToDelete] = useState<string | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [shouldSelect, setShouldSelect] = useState(true);
+  const [startHour, setStartHour] = useState<number | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
-  const lastTouchedHour = useRef<number | null>(null);
 
   // Fonction utilitaire pour mettre à jour les créneaux
-  const updateSlots = (startHour: number, endHour: number) => {
-    const start = Math.min(startHour, endHour);
-    const end = Math.max(startHour, endHour);
+  const updateSlots = (fromHour: number, toHour: number, select: boolean) => {
+    const start = Math.min(fromHour, toHour);
+    const end = Math.max(fromHour, toHour);
     const newSlots = new Set(formData.slots);
-    const shouldAdd = !formData.slots.includes(startHour);
     
     for (let h = start; h <= end; h++) {
-      if (shouldAdd) {
+      if (select) {
         newSlots.add(h);
       } else {
         newSlots.delete(h);
@@ -101,40 +100,41 @@ function ActivityForm({
 
   // Gestion des événements souris
   const handleSlotMouseDown = (hour: number) => {
-    setIsDragging(true);
-    setDragStartHour(hour);
+    setIsSelecting(true);
+    setStartHour(hour);
+    setShouldSelect(!formData.slots.includes(hour));
     toggleSlot(hour);
   };
 
   const handleSlotMouseEnter = (hour: number) => {
-    if (isDragging && dragStartHour !== null) {
-      updateSlots(dragStartHour, hour);
+    if (isSelecting && startHour !== null) {
+      updateSlots(startHour, hour, shouldSelect);
     }
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
-    setDragStartHour(null);
+    setIsSelecting(false);
+    setStartHour(null);
   };
 
   // Gestion des événements tactiles
   const handleTouchStart = (hour: number) => {
-    setDragStartHour(hour);
-    lastTouchedHour.current = hour;
+    setIsSelecting(true);
+    setStartHour(hour);
+    setShouldSelect(!formData.slots.includes(hour));
     toggleSlot(hour);
   };
 
   const handleTouchMove = (e: React.TouchEvent, hour: number) => {
     e.preventDefault(); // Empêche le défilement pendant le glissement
-    if (dragStartHour !== null && lastTouchedHour.current !== hour) {
-      lastTouchedHour.current = hour;
-      updateSlots(dragStartHour, hour);
+    if (isSelecting && startHour !== null) {
+      updateSlots(startHour, hour, shouldSelect);
     }
   };
 
   const handleTouchEnd = () => {
-    setDragStartHour(null);
-    lastTouchedHour.current = null;
+    setIsSelecting(false);
+    setStartHour(null);
   };
 
   // Gestionnaire d'événements unifié pour le glissement
@@ -440,6 +440,9 @@ function ActivityForm({
                   key={hour}
                   type="button"
                   {...getSlotHandlers(hour)}
+                  style={{
+                    ...(isSelecting && startHour !== null) ? { filter: 'brightness(1.2)' } : {}
+                  }}
                   className={cn(
                     "h-10 text-sm font-bold rounded-lg transition-colors select-none touch-none",
                     formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
