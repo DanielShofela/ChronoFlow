@@ -11,7 +11,7 @@ interface ActivityListProps {
   completedSlots: Set<string>;
   selectedDate: Date;
   onSlotToggle: (hour: number) => void;
-  onGoToSettings: () => void;
+  onGoToSettings: (activity?: Activity) => void;
   isPastDate: boolean;
   streaks: { [key: string]: number };
   totalActivitiesCount: number;
@@ -41,7 +41,7 @@ export function ActivityList({
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Activités du jour</h2>
         <motion.button
-          onClick={onGoToSettings}
+          onClick={() => onGoToSettings()}
           className="flex items-center gap-2 text-sm text-primary font-medium hover:underline"
           whileTap={{ scale: 0.95 }}
         >
@@ -74,20 +74,24 @@ export function ActivityList({
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{activity.icon}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className={cn("font-semibold", completed && 'line-through text-muted-foreground')}>
-                            {activity.name}
-                          </h3>
-                          {activity.reminderMinutes && activity.reminderMinutes > 0 && (
-                            <Bell className="w-4 h-4 text-primary" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {activity.slots.length} créneau{activity.slots.length > 1 ? 'x' : ''}
-                        </p>
-                      </div>
+                      <button
+                        className={cn(
+                          "flex items-center gap-2 text-primary underline font-semibold hover:text-primary/80 transition-colors",
+                          completed && 'line-through text-muted-foreground',
+                        )}
+                        onClick={() => onGoToSettings(activity)}
+                        aria-label={`Modifier l'activité ${activity.name}`}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      >
+                        <span className="text-2xl">{activity.icon}</span>
+                        {activity.name}
+                      </button>
+                      {activity.reminderMinutes && activity.reminderMinutes > 0 && (
+                        <Bell className="w-4 h-4 text-primary" aria-label={`Rappel ${activity.reminderMinutes} minutes avant.`} />
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {activity.slots.length} créneau{activity.slots.length > 1 ? 'x' : ''}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1.5">
                        {completed ? (
@@ -140,7 +144,7 @@ export function ActivityList({
                 <h3 className="text-lg font-semibold text-foreground">Bienvenue !</h3>
                 <p className="mt-2 text-muted-foreground">Prêt à organiser votre journée ?<br/>Créez votre première activité pour commencer.</p>
                 <button
-                  onClick={onGoToSettings}
+                  onClick={() => onGoToSettings()}
                   className="mt-6 inline-flex items-center gap-2 px-6 h-12 bg-primary text-primary-foreground rounded-lg font-semibold text-base hover:bg-primary/90 transition-colors"
                 >
                   <PlusCircle className="w-5 h-5" />
@@ -150,7 +154,7 @@ export function ActivityList({
             ) : (
               <>
                 <p className="text-muted-foreground">Aucune activité prévue pour aujourd'hui.</p>
-                <button onClick={onGoToSettings} className="mt-4 text-primary font-semibold hover:underline">
+                <button onClick={() => onGoToSettings()} className="mt-4 text-primary font-semibold hover:underline">
                   Ajouter une activité
                 </button>
               </>
