@@ -20,8 +20,9 @@ const drawClock = (
 ) => {
   const center = size / 2;
   const activityRadius = size * 0.42;
-  const innerRadius = size * 0.12; // Réduit pour créer plus d'espace
-  const dateCircleRadius = size * 0.17; // Réduit davantage le cercle interne
+  const innerRadius = size * 0.22; // Augmenté pour créer plus d'espace avec les créneaux
+  const dateCircleRadius = size * 0.17; // Cercle de la date au centre
+  const activityInnerRadius = size * 0.30; // Nouveau rayon interne pour les activités
 
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#18181b' : '#ffffff';
@@ -74,8 +75,8 @@ const drawClock = (
     const endAngle = (((hour + 1) - 6) * 15 - 0.5) * (Math.PI / 180);
 
     ctx.beginPath();
-    ctx.arc(center, center, (activityRadius + innerRadius) / 2, startAngle, endAngle);
-    ctx.lineWidth = (activityRadius - innerRadius) * 0.7; // Réduit pour éviter de toucher le cercle interne
+    ctx.arc(center, center, (activityRadius + activityInnerRadius) / 2, startAngle, endAngle);
+    ctx.lineWidth = (activityRadius - activityInnerRadius) * 0.8; // Ajusté pour les nouveaux rayons
     ctx.strokeStyle = activity ? activity.color : 'transparent';
     ctx.stroke();
   }
