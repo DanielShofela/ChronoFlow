@@ -19,10 +19,10 @@ const drawClock = (
   currentTime: Date
 ) => {
   const center = size / 2;
-  const activityRadius = size * 0.42;
+  const activityRadius = size * 0.47; // Augmenté pour des créneaux plus longs
   const innerRadius = size * 0.22; // Rayon du cercle interne
   const dateCircleRadius = size * 0.17; // Cercle de la date au centre
-  const activityInnerRadius = size * 0.34; // Ajusté pour augmenter l'espace avec le cercle interne
+  const activityInnerRadius = size * 0.34; // Rayon interne des activités
 
   const isDark = theme === 'dark';
   const bgColor = isDark ? '#18181b' : '#ffffff';
