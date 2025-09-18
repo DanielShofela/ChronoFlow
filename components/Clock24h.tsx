@@ -3,10 +3,7 @@ import { motion } from 'framer-motion';
 import { format, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale/fr';
 import type { Activity } from '../types';
-import { GroupSelectionBubble } from './GroupSelectionBubble';
 
-// Durée du maintien pour activer la sélection (en ms)
-const LONG_PRESS_DURATION = 500;
 
 interface Clock24hProps {
   activities: Activity[];
@@ -20,19 +17,18 @@ interface Clock24hProps {
 export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggle, currentTime, isPastDate }: Clock24hProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(380);
-  const [isSelectionActive, setIsSelectionActive] = useState(false);
-  const [groupSelectionStart, setGroupSelectionStart] = useState<number | null>(null);
-  const [lastTouchedHour, setLastTouchedHour] = useState<number | null>(null);
-  const longPressTimer = useRef<number | null>(null);
-  const [showGroupBubble, setShowGroupBubble] = useState(false);
+  const [startHour, setStartHour] = useState<number | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [shouldSelect, setShouldSelect] = useState(true);
 
   // Fonction pour sélectionner une plage d'heures
-  const selectHourRange = useCallback((startHour: number, endHour: number) => {
-    const minHour = Math.min(startHour, endHour);
-    const maxHour = Math.max(startHour, endHour);
+  const updateHourRange = useCallback((fromHour: number, toHour: number, select: boolean) => {
+    const minHour = Math.min(fromHour, toHour);
+    const maxHour = Math.max(fromHour, toHour);
     
     for (let hour = minHour; hour <= maxHour; hour++) {
-      if (!completedSlots.has(getSlotKey(hour))) {
+      const isHourCompleted = completedSlots.has(getSlotKey(hour));
+      if (select !== isHourCompleted) {
         onSlotToggle(hour);
       }
     }
@@ -110,11 +106,7 @@ export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggl
 
   return (
     <div className="relative w-full h-auto flex justify-center" ref={containerRef}>
-      <GroupSelectionBubble
-        show={showGroupBubble}
-        startHour={groupSelectionStart || 0}
-        endHour={lastTouchedHour}
-      />
+
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <filter id="glow">
@@ -145,50 +137,34 @@ export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggl
                   if (isPastDate) return;
                   e.preventDefault();
                   const hour = i;
-                  setLastTouchedHour(hour);
-                  setGroupSelectionStart(hour);
-                  longPressTimer.current = window.setTimeout(() => {
-                    vibrate();
-                    setIsSelectionActive(true);
-                    setShowGroupBubble(true);
-                    onSlotToggle(hour);
-                  }, LONG_PRESS_DURATION);
+                  setStartHour(hour);
+                  setIsSelecting(true);
+                  setShouldSelect(!completedSlots.has(getSlotKey(hour)));
+                  onSlotToggle(hour);
+                  vibrate();
                 }}
                 onTouchMove={(e) => {
-                  if (isPastDate || !isSelectionActive || groupSelectionStart === null) return;
+                  if (isPastDate || !isSelecting || startHour === null) return;
                   e.preventDefault();
                   const touch = e.touches[0];
                   const element = document.elementFromPoint(touch.clientX, touch.clientY);
                   const hourElement = element?.closest('g[data-hour]');
                   if (hourElement) {
                     const hour = parseInt(hourElement.getAttribute('data-hour') || '', 10);
-                    if (!isNaN(hour) && hour !== lastTouchedHour) {
-                      setLastTouchedHour(hour);
-                      selectHourRange(groupSelectionStart, hour);
+                    if (!isNaN(hour)) {
+                      updateHourRange(startHour, hour, shouldSelect);
                     }
                   }
                 }}
                 onTouchEnd={() => {
                   if (isPastDate) return;
-                  if (longPressTimer.current) {
-                    clearTimeout(longPressTimer.current);
-                    longPressTimer.current = null;
-                  }
-                  setIsSelectionActive(false);
-                  setShowGroupBubble(false);
-                  setGroupSelectionStart(null);
-                  setLastTouchedHour(null);
+                  setIsSelecting(false);
+                  setStartHour(null);
                 }}
                 onTouchCancel={() => {
                   if (isPastDate) return;
-                  if (longPressTimer.current) {
-                    clearTimeout(longPressTimer.current);
-                    longPressTimer.current = null;
-                  }
-                  setIsSelectionActive(false);
-                  setShowGroupBubble(false);
-                  setGroupSelectionStart(null);
-                  setLastTouchedHour(null);
+                  setIsSelecting(false);
+                  setStartHour(null);
                 }}
                 data-hour={i}
                 {...{ whileHover: !isPastDate ? { scale: 1.03 } : {} }}
@@ -202,7 +178,7 @@ export function Clock24h({ activities, completedSlots, selectedDate, onSlotToggl
                   strokeWidth="2"
                   style={{
                     ...showClockHand && i === currentHour ? { filter: 'url(#glow)' } : {},
-                    ...(isSelectionActive && i === lastTouchedHour) ? { filter: 'brightness(1.2)' } : {}
+                    ...(isSelecting && startHour !== null) ? { filter: 'brightness(1.2)' } : {}
                   }}
                 />
               </motion.g>
