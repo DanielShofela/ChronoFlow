@@ -147,11 +147,11 @@ function ActivityForm({
   });
 
   useEffect(() => {
-    if (isDragging) {
+    if (isSelecting) {
       window.addEventListener('mouseup', handleMouseUp);
       return () => window.removeEventListener('mouseup', handleMouseUp);
     }
-  }, [isDragging]);
+  }, [isSelecting]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
