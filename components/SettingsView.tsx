@@ -19,6 +19,7 @@ interface SettingsViewProps {
   onBack: () => void;
   showVerse: boolean;
   onShowVerseChange: (show: boolean) => void;
+  selectedActivity?: Activity | null;
 }
 
 const emptyActivity: Omit<Activity, 'id'> = {
@@ -75,8 +76,30 @@ function ActivityForm({
   const [colorToDelete, setColorToDelete] = useState<string | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const lastTouchedHour = useRef<number | null>(null);
 
-  // Nouvelle fonction pour gérer la sélection glissante des créneaux
+  // Fonction utilitaire pour mettre à jour les créneaux
+  const updateSlots = (startHour: number, endHour: number) => {
+    const start = Math.min(startHour, endHour);
+    const end = Math.max(startHour, endHour);
+    const newSlots = new Set(formData.slots);
+    const shouldAdd = !formData.slots.includes(startHour);
+    
+    for (let h = start; h <= end; h++) {
+      if (shouldAdd) {
+        newSlots.add(h);
+      } else {
+        newSlots.delete(h);
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      slots: Array.from(newSlots).sort((a, b) => a - b),
+    }));
+  };
+
+  // Gestion des événements souris
   const handleSlotMouseDown = (hour: number) => {
     setIsDragging(true);
     setDragStartHour(hour);
@@ -85,26 +108,7 @@ function ActivityForm({
 
   const handleSlotMouseEnter = (hour: number) => {
     if (isDragging && dragStartHour !== null) {
-      const start = Math.min(dragStartHour, hour);
-      const end = Math.max(dragStartHour, hour);
-      const newSlots = new Set(formData.slots);
-      
-      // Si on commence sur un créneau non sélectionné, on ajoute
-      // Si on commence sur un créneau sélectionné, on retire
-      const shouldAdd = !formData.slots.includes(dragStartHour);
-      
-      for (let h = start; h <= end; h++) {
-        if (shouldAdd) {
-          newSlots.add(h);
-        } else {
-          newSlots.delete(h);
-        }
-      }
-      
-      setFormData(prev => ({
-        ...prev,
-        slots: Array.from(newSlots).sort((a, b) => a - b),
-      }));
+      updateSlots(dragStartHour, hour);
     }
   };
 
@@ -112,6 +116,35 @@ function ActivityForm({
     setIsDragging(false);
     setDragStartHour(null);
   };
+
+  // Gestion des événements tactiles
+  const handleTouchStart = (hour: number) => {
+    setDragStartHour(hour);
+    lastTouchedHour.current = hour;
+    toggleSlot(hour);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, hour: number) => {
+    e.preventDefault(); // Empêche le défilement pendant le glissement
+    if (dragStartHour !== null && lastTouchedHour.current !== hour) {
+      lastTouchedHour.current = hour;
+      updateSlots(dragStartHour, hour);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setDragStartHour(null);
+    lastTouchedHour.current = null;
+  };
+
+  // Gestionnaire d'événements unifié pour le glissement
+  const getSlotHandlers = (hour: number) => ({
+    onMouseDown: () => handleSlotMouseDown(hour),
+    onMouseEnter: () => handleSlotMouseEnter(hour),
+    onTouchStart: () => handleTouchStart(hour),
+    onTouchMove: (e: React.TouchEvent) => handleTouchMove(e, hour),
+    onTouchEnd: handleTouchEnd,
+  });
 
   useEffect(() => {
     if (isDragging) {
@@ -406,9 +439,11 @@ function ActivityForm({
                 <button
                   key={hour}
                   type="button"
-                  onMouseDown={() => handleSlotMouseDown(hour)}
-                  onMouseEnter={() => handleSlotMouseEnter(hour)}
-                  className={cn("h-10 text-sm font-bold rounded-lg transition-colors select-none", formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')}
+                  {...getSlotHandlers(hour)}
+                  className={cn(
+                    "h-10 text-sm font-bold rounded-lg transition-colors select-none touch-none",
+                    formData.slots.includes(hour) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                  )}
                 >{hour}</button>
               ))}
             </div>
@@ -447,11 +482,12 @@ export default function SettingsView({
   onBack,
   showVerse,
   onShowVerseChange,
+  selectedActivity,
 }: SettingsViewProps) {
-  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(selectedActivity || null);
   const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
   const [view, setView] = useState<'active' | 'archived'>('active');
-  const [showForm, setShowForm] = useState(activities.length === 0);
+  const [showForm, setShowForm] = useState(activities.length === 0 || !!selectedActivity);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | PermissionState>('default');
 
   useEffect(() => {

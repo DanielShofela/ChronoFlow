@@ -74,8 +74,10 @@ const drawClock = (
     const endAngle = (((hour + 1) - 6) * 15 - 0.5) * (Math.PI / 180);
 
     ctx.beginPath();
-    ctx.arc(center, center, (activityRadius + innerRadius) / 2, startAngle, endAngle);
-    ctx.lineWidth = (activityRadius - innerRadius) * 0.7; // Réduit de 0.8 à 0.7 pour créer un espace
+    const arcRadius = (activityRadius + innerRadius) / 2;
+    ctx.arc(center, center, arcRadius, startAngle, endAngle);
+    // Réduire la largeur pour créer un espace avec le cercle interne
+    ctx.lineWidth = (activityRadius - innerRadius) * 0.7;
     ctx.strokeStyle = activity ? activity.color : 'transparent';
     ctx.stroke();
   }
@@ -159,8 +161,8 @@ const drawClock = (
 
   // Date sous l'heure
   ctx.font = `${size * 0.035}px system-ui, sans-serif`;
-  ctx.fillStyle = isDark ? '#e4e4e7' : '#3f3f46'; // Couleurs plus foncées pour une meilleure lisibilité
-  ctx.fillText(dayString, center, center + size * 0.05);
+  ctx.fillStyle = isDark ? '#f4f4f5' : '#27272a'; // Couleur plus foncée pour une meilleure lisibilité
+  ctx.fillText(dayString, center, center + size * 0.045);
 };
 
 

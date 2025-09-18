@@ -30,25 +30,46 @@ const FORCE_CACHE_UPDATE = true;
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Force le rechargement des ressources même si elles sont déjà en cache
-      if (FORCE_CACHE_UPDATE) {
-        return cache.keys().then((keys) => {
-          return Promise.all([
-            ...keys.map(key => cache.delete(key)), // Supprime l'ancien cache
-            cache.addAll(CACHED_ASSETS) // Ajoute les nouvelles ressources
-          ]);
-        });
-      }
-      return cache.addAll(CACHED_ASSETS);
+      return cache.addAll(CACHED_ASSETS).then(() => {
+        // Forcer l'activation immédiate du SW
+        self.skipWaiting();
+      });
     })
   );
-  // Force l'activation immédiate
-  self.skipWaiting();
+});
+
+// Écoute des messages du client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activation du service worker
 self.addEventListener('activate', (event) => {
   event.waitUntil(
+    Promise.all([
+      // Nettoyage des anciens caches
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames
+            .filter(name => name.startsWith('chronoflow-') && name !== CACHE_NAME)
+            .map(name => caches.delete(name))
+        );
+      }),
+      // Prendre le contrôle de tous les clients
+      clients.claim().then(() => {
+        // Notifier tous les clients qu'une nouvelle version est disponible
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'NEW_VERSION_ACTIVATED',
+              version: CACHE_VERSION
+            });
+          });
+        });
+      })
+    ])
     Promise.all([
       // Supprime tous les anciens caches
       caches.keys().then((cacheNames) => {

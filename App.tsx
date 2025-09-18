@@ -4,6 +4,8 @@ import { fr } from "date-fns/locale/fr";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, BarChart3, ChevronLeft, ChevronRight, Pin, HelpCircle, Lock } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useServiceWorkerUpdate } from "./hooks/useServiceWorkerUpdate";
+import { useConnectionStatus } from "./hooks/useConnectionStatus";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import type { Activity, CompletedSlot, ViewType } from "./types";
 import { defaultActivities } from "./constants";
@@ -37,6 +39,7 @@ const trackEvent = (eventName: string, eventParams: Record<string, any> = {}) =>
 export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('main');
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [activities, setActivities] = useLocalStorage<Activity[]>('activities', defaultActivities);
   const [completedSlots, setCompletedSlots] = useLocalStorage<CompletedSlot[]>('completedSlots', sampleCompletedSlots);
   const [dailyPlans, setDailyPlans] = useLocalStorage<{ [date: string]: Activity[] }>('dailyPlans', {});
@@ -44,7 +47,8 @@ export default function App() {
   const [showVerse, setShowVerse] = useLocalStorage<boolean>('showVerse', true);
   const [isPipEnabled, setPipEnabled] = useState(false);
   const [isPipSupported, setIsPipSupported] = useState(false);
-  const [showUpdateToast, setShowUpdateToast] = useState(false);
+  const { updateAvailable, installUpdate } = useServiceWorkerUpdate();
+  const { isOnline, showToast: showConnectionToast } = useConnectionStatus();
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [connectionStatusToast, setConnectionStatusToast] = useState<'online' | 'offline' | null>(null);
@@ -236,22 +240,51 @@ export default function App() {
     }, [activities, selectedDate, completedSlotsSet]);
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-        if ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
-            setIsPipSupported(true);
-        }
-        setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
-
-        // Vérifier l'état de la connexion au chargement initial
-        setConnectionStatusToast(navigator.onLine ? 'online' : 'offline');
-    }
+    const handleOnline = () => {
+      setConnectionStatusToast('online');
+      // Réinitialiser après 5 secondes
+      setTimeout(() => setConnectionStatusToast(null), 5000);
+    };
     
+    const handleOffline = () => {
+      setConnectionStatusToast('offline');
+      // Garde la notification offline visible
+    };
+
+    if (typeof document !== 'undefined') {
+      if ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
+        setIsPipSupported(true);
+      }
+      setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+
+      // Vérifier l'état de la connexion au chargement initial
+      const isOnline = navigator.onLine;
+      setConnectionStatusToast(isOnline ? 'online' : 'offline');
+      if (isOnline) {
+        // Si en ligne au démarrage, masquer après 5 secondes
+        setTimeout(() => setConnectionStatusToast(null), 5000);
+      }
+      
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+
     // Vérifie les mises à jour du service worker
     const checkForUpdates = async () => {
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.ready;
           
+          // Écouteur pour détecter une nouvelle version en attente
+          registration.addEventListener('waiting', (event) => {
+            setShowUpdateToast(true);
+          });
+
           // Force une vérification de mise à jour
           await registration.update();
 
@@ -293,27 +326,12 @@ export default function App() {
     };
 
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-        e.preventDefault();
-        setInstallPromptEvent(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    const handleAppInstalled = () => {
-        setInstallPromptEvent(null);
-    };
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    const handleOffline = () => setConnectionStatusToast('offline');
-    const handleOnline = () => setConnectionStatusToast('online');
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('online', handleOnline);
+    // Écoute les messages du service worker
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('online', handleOnline);
+      clearInterval(updateCheckInterval);
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
     };
   }, []);
 
@@ -630,7 +648,10 @@ export default function App() {
                       completedSlots={completedSlotsSet}
                       selectedDate={selectedDate}
                       onSlotToggle={handleSlotToggle}
-                      onGoToSettings={() => setCurrentView('settings')}
+                      onGoToSettings={(activity) => {
+                        setSelectedActivity(activity || null);
+                        setCurrentView('settings');
+                      }}
                       isPastDate={isPastDate}
                       streaks={activityStreaks}
                       totalActivitiesCount={activities.length}
@@ -662,9 +683,13 @@ export default function App() {
               <SettingsView
                 activities={activities}
                 onActivitiesChange={setActivities}
-                onBack={() => setCurrentView('main')}
+                onBack={() => {
+                  setCurrentView('main');
+                  setSelectedActivity(null);
+                }}
                 showVerse={showVerse}
                 onShowVerseChange={setShowVerse}
+                selectedActivity={selectedActivity}
               />
             )}
 
@@ -693,12 +718,15 @@ export default function App() {
           currentTime={currentTime}
         />
       )}
-      <AnimatePresence>
-        {connectionStatusToast && <ConnectionStatusToast type={connectionStatusToast} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showUpdateToast && <UpdateToast onClose={() => setShowUpdateToast(false)} />}
-      </AnimatePresence>
+      <ConnectionStatusToast
+        isOnline={isOnline}
+        show={showConnectionToast}
+      />
+      <UpdateToast
+        show={updateAvailable && isOnline}
+        onUpdate={installUpdate}
+        autoUpdate={false}
+      />
       <AnimatePresence>
         {!isStandalone && installPromptEvent && (
           <InstallPrompt onInstall={handleInstallClick} />
