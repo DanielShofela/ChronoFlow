@@ -75,12 +75,24 @@ const itemVariants: Variants = {
 };
 
 export function FaqView({ onBack }: FaqViewProps) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
-  const [feedback, setFeedback] = useState('');
+  const [selectedQuestion, setSelectedQuestion] = useState<number | null>(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [messageSent, setMessageSent] = useState(false);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  
+  // Ajout d'un style pour compenser la barre de navigation
+  useEffect(() => {
+    document.body.style.paddingBottom = '5rem';
+    return () => {
+      document.body.style.paddingBottom = '0';
+    };
+  }, []);
   
   useEffect(() => {
     if (submitStatus === 'success' || submitStatus === 'error') {
@@ -95,7 +107,9 @@ export function FaqView({ onBack }: FaqViewProps) {
   
   const handleSubmitFeedback = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (rating === 0 || isSubmitting) return;
+    if (rating === 0 || isSubmitting) {
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitStatus('idle');

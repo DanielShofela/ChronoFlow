@@ -12,6 +12,15 @@ const CACHED_ASSETS = [
   '/icon_header.png'
 ];
 
+// Liste des extensions de fichiers à mettre en cache
+const CACHE_FILE_EXTENSIONS = [
+  '.css',
+  '.js',
+  '.woff2',
+  '.woff',
+  '.ttf'
+];
+
 // Force le rechargement des ressources si la version change
 const FORCE_CACHE_UPDATE = true;
 
@@ -62,50 +71,62 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Stratégie de cache : Network First avec validation de version
+// Stratégie de cache : Cache First pour les ressources statiques, Network First pour le reste
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  const isCacheFirst = CACHE_FILE_EXTENSIONS.some(ext => url.pathname.endsWith(ext)) ||
+                      CACHED_ASSETS.includes(url.pathname);
+
   event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        // Si la requête réseau réussit, mettre à jour le cache
-        if (networkResponse.ok) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return networkResponse;
-      })
-      .catch(async () => {
-        const cachedResponse = await caches.match(event.request);
-        
-        // Si nous avons une réponse en cache
-        if (cachedResponse) {
-          // Vérifie si c'est une navigation vers la page principale
-          if (event.request.mode === 'navigate') {
-            // Notifie l'application que nous utilisons une version en cache
-            self.clients.matchAll().then(clients => {
-              clients.forEach(client => {
-                client.postMessage({
-                  type: 'USING_CACHED_VERSION',
-                  version: CACHE_VERSION
+    (isCacheFirst
+      ? // Cache First pour les ressources statiques
+        caches.match(event.request)
+          .then(cachedResponse => cachedResponse || fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse.ok) {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request, responseClone);
                 });
+              }
+              return networkResponse;
+            }))
+      : // Network First pour le reste
+        fetch(event.request)
+          .then(networkResponse => {
+            if (networkResponse.ok) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseClone);
               });
+            }
+            return networkResponse;
+          })
+          .catch(async () => {
+            const cachedResponse = await caches.match(event.request);
+            if (cachedResponse) {
+              if (event.request.mode === 'navigate') {
+                self.clients.matchAll().then(clients => {
+                  clients.forEach(client => {
+                    client.postMessage({
+                      type: 'USING_CACHED_VERSION',
+                      version: CACHE_VERSION
+                    });
+                  });
+                });
+              }
+              return cachedResponse;
+            }
+            
+            if (event.request.mode === 'navigate') {
+              return caches.match('/');
+            }
+            
+            return new Response('', {
+              status: 404,
+              statusText: 'Not Found'
             });
-          }
-          return cachedResponse;
-        }
-
-        // Si pas de cache pour une navigation, retourne la page d'accueil
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-
-        // Sinon retourne une erreur 404
-        return new Response('', {
-          status: 404,
-          statusText: 'Not Found'
-        });
-      })
+          })
+    )
   );
 });

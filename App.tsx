@@ -12,7 +12,7 @@ import { sampleCompletedSlots } from "./data/sample-completed-slots";
 import { Clock24h } from "./components/Clock24h";
 import { ActivityList } from "./components/ActivityList";
 import { SettingsView } from "./components/SettingsView";
-import { StatsView } from "./components/StatsView";
+import StatsView from "./components/StatsView";
 import { FaqView } from "./components/FaqView";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { DailyVerse } from "./components/DailyVerse";
@@ -112,7 +112,9 @@ export default function App() {
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
     const sortActivities = (activitiesToSort: Activity[]): Activity[] => {
-      if (!activitiesToSort) return [];
+      if (!activitiesToSort) {
+        return [];
+      }
       return [...activitiesToSort].sort((a, b) => {
         // An activity is completed if all its slots for the day are completed.
         const isACompleted = a.slots.length > 0 && a.slots.every(slot => completedSlotsSet.has(`${dateKey}-${slot}`));
@@ -130,7 +132,9 @@ export default function App() {
 
     const dayOfWeek = getDay(selectedDate);
     const filteredActivities = activities.filter(a => {
-        if (a.isArchived) return false;
+        if (a.isArchived) {
+            return false;
+        }
         const isRecurring = a.isRecurring ?? true; 
         
         if (isRecurring) {
@@ -153,7 +157,9 @@ export default function App() {
     if (isPastDate && dailyPlans[dateKey] === undefined) {
         const dayOfWeek = getDay(selectedDate);
         const planToSave = activities.filter(a => {
-            if (a.isArchived) return false;
+            if (a.isArchived) {
+              return false;
+            }
             const isRecurring = a.isRecurring ?? true;
             if (isRecurring) {
                 return a.days?.includes(dayOfWeek);
@@ -172,7 +178,9 @@ export default function App() {
     // Helper to check if an activity was fully completed on a given date
     const isActivityCompletedOnDate = (activity: Activity, date: Date, slotsSet: Set<string>): boolean => {
       const dateKey = format(date, 'yyyy-MM-dd');
-      if (activity.slots.length === 0) return false;
+      if (activity.slots.length === 0) {
+        return false;
+      }
       return activity.slots.every(slot => slotsSet.has(`${dateKey}-${slot}`));
     };
 
@@ -225,6 +233,9 @@ export default function App() {
             setIsPipSupported(true);
         }
         setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+
+        // Vérifier l'état de la connexion au chargement initial
+        setConnectionStatusToast(navigator.onLine ? 'online' : 'offline');
     }
     
     // Vérifie les mises à jour du service worker
@@ -249,9 +260,13 @@ export default function App() {
     // Écoute les messages du service worker
     const handleServiceWorkerMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
-        setShowUpdateToast(true);
-        // Stocke la version pour référence
-        sessionStorage.setItem('pendingVersion', event.data.version);
+        // Vérifie si cette version a déjà été ignorée
+        const lastIgnoredVersion = localStorage.getItem('lastIgnoredUpdateVersion');
+        if (lastIgnoredVersion !== event.data.version) {
+          setShowUpdateToast(true);
+          // Stocke la version pour référence
+          sessionStorage.setItem('pendingVersion', event.data.version);
+        }
       }
     };
 
@@ -334,7 +349,9 @@ export default function App() {
       const dateKey = format(now, 'yyyy-MM-dd');
 
       const activitiesWithReminders = activities.filter(a => {
-        if (a.isArchived || !a.reminderMinutes || a.reminderMinutes <= 0) return false;
+        if (a.isArchived || !a.reminderMinutes || a.reminderMinutes <= 0) {
+          return false;
+        }
         
         const isRecurring = a.isRecurring ?? true;
         if (isRecurring) {
@@ -402,7 +419,9 @@ export default function App() {
   };
 
   const handleSlotToggle = (hour: number) => {
-    if (isPastDate) return;
+    if (isPastDate) {
+      return;
+    }
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
     const slotKey = `${dateKey}-${hour}`;
 

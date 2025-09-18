@@ -85,7 +85,13 @@ export function UpdateToast({ onClose }: UpdateToastProps) {
         </div>
 
         <button 
-          onClick={onClose} 
+          onClick={() => {
+            const version = sessionStorage.getItem('pendingVersion');
+            if (version) {
+              localStorage.setItem('lastIgnoredUpdateVersion', version);
+            }
+            onClose();
+          }} 
           className="p-2 rounded-full hover:bg-muted transition-colors flex-shrink-0" 
           aria-label="Fermer"
         >

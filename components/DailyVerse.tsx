@@ -8,7 +8,9 @@ interface DailyVerseProps {
 }
 
 export function DailyVerse({ verse }: DailyVerseProps) {
-  if (!verse) return null;
+  if (!verse) {
+    return null;
+  }
 
   return (
     <motion.div
