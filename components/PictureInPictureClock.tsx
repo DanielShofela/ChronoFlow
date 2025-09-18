@@ -76,7 +76,7 @@ const drawClock = (
 
     ctx.beginPath();
     ctx.arc(center, center, (activityRadius + activityInnerRadius) / 2, startAngle, endAngle);
-    ctx.lineWidth = (activityRadius - activityInnerRadius) * 0.95; // Augmenté pour s'approcher plus du cercle interne
+    ctx.lineWidth = (activityRadius - activityInnerRadius) * 0.99; // Presque collé au cercle interne
     ctx.strokeStyle = activity ? activity.color : 'transparent';
     ctx.stroke();
   }
