@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Edit, Trash2, Archive, ArchiveRestore, X, Bell, BookOpen, Palette, ChevronDown, Trash } from 'lucide-react';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
